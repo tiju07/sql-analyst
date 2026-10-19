@@ -1,0 +1,32 @@
+{
+	admin off
+}
+
+# Local default is plain HTTP on :8080; set SITE_ADDRESS to a domain for automatic HTTPS.
+{$SITE_ADDRESS::8080} {
+	# SSE: no buffering, no compression, and a read timeout well beyond a full agent run.
+	@sse path /api/chat /api/runs/*/clarify
+	handle @sse {
+		reverse_proxy api:8000 {
+			flush_interval -1
+			transport http {
+				read_timeout 10m
+			}
+		}
+	}
+
+	# Prometheus scrapes api:8000 inside the network; never expose it publicly.
+	handle /api/metrics {
+		respond 404
+	}
+
+	handle /api/* {
+		encode zstd gzip
+		reverse_proxy api:8000
+	}
+
+	handle {
+		encode zstd gzip
+		reverse_proxy web:3000
+	}
+}

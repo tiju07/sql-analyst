@@ -1,0 +1,95 @@
+name: sql-analyst
+
+x-backend: &backend
+  build: ./backend
+  env_file: .env
+  environment: &backend-env
+    # In-network hosts override the localhost URLs that .env uses for host-side tooling.
+    APP_DATABASE_URL: postgresql://app:${APP_DB_PASSWORD}@app-db:5432/app
+    TARGET_DATABASE_URL: postgresql://analyst_ro:${ANALYST_RO_PASSWORD}@target-db:5432/olist
+    REDIS_URL: redis://redis:6379/0
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    # Least privilege: long-running services never see the target DB owner credentials.
+    TARGET_DB_OWNER_PASSWORD: ""
+    TARGET_ADMIN_DATABASE_URL: ""
+  depends_on:
+    app-db: { condition: service_healthy }
+    target-db: { condition: service_healthy }
+    redis: { condition: service_healthy }
+
+services:
+  caddy:
+    image: caddy:2.11.7
+    ports: ["${HTTP_PORT:-8080}:8080"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:8080}
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      api: { condition: service_healthy }
+
+  api:
+    <<: *backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # One-shot tooling: `docker compose run --rm seed python -m scripts.<name>`.
+  seed:
+    <<: *backend
+    profiles: [tools]
+    environment:
+      <<: *backend-env
+      TARGET_ADMIN_DATABASE_URL: postgresql://olist_owner:${TARGET_DB_OWNER_PASSWORD}@target-db:5432/olist
+    volumes: [./data/olist:/data/olist:ro]
+
+  app-db:
+    image: pgvector/pgvector:0.8.7-pg16
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+      POSTGRES_DB: app
+    ports: ["127.0.0.1:5433:5432"]
+    volumes: [app-db:/var/lib/postgresql/data]
+    healthcheck: &pg-health
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  target-db:
+    image: postgres:16.15
+    environment:
+      POSTGRES_USER: olist_owner
+      POSTGRES_PASSWORD: ${TARGET_DB_OWNER_PASSWORD}
+      POSTGRES_DB: olist
+    ports: ["127.0.0.1:5434:5432"]
+    volumes: [target-db:/var/lib/postgresql/data]
+    healthcheck: *pg-health
+
+  redis:
+    image: redis:8.10.2
+    ports: ["127.0.0.1:6380:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.163.1
+    command: ["--config=/etc/otel/collector.yaml"]
+    volumes: [./infra/otel/collector.yaml:/etc/otel/collector.yaml:ro]
+    depends_on: [jaeger]
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    ports: ["127.0.0.1:16686:16686"]
+
+volumes:
+  app-db:
+  target-db:
+  caddy-data:
