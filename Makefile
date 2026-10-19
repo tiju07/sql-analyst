@@ -31,10 +31,10 @@ test-unit:
 	$(BACKEND) pytest -m "not integration"
 
 lint:
-	$(BACKEND) ruff check . && $(BACKEND) ruff format --check .
+	cd backend && uv run ruff check . && uv run ruff format --check .
 
 fmt:
-	$(BACKEND) ruff check --fix . && $(BACKEND) ruff format .
+	cd backend && uv run ruff check --fix . && uv run ruff format .
 
 typecheck:
 	$(BACKEND) mypy
