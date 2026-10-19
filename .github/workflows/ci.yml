@@ -24,8 +24,83 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
-      # Integration tests start Postgres via testcontainers on the runner's Docker.
-      - run: uv run pytest --cov=app --cov-report=xml
+      # Integration tests start Postgres and Redis via testcontainers on the runner's Docker.
+      - run: uv run pytest --cov=app/sql --cov=app/graph --cov=app/retrieval --cov-fail-under=85
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm format:check
+      - run: pnpm test
+      - run: pnpm build
+
+  api-types:
+    name: API types are up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: cd frontend && pnpm install --frozen-lockfile
+      - name: Regenerate from the backend schema and fail on drift
+        env:
+          APP_DATABASE_URL: postgresql://x:x@localhost/x
+          TARGET_DATABASE_URL: postgresql://x:x@localhost/x
+          SESSION_SECRET: ci-only-session-secret-0123456789abcdef
+          RLS_SIGNING_SECRET: ci-only-rls-secret-0123456789abcdef
+        run: |
+          make types
+          git diff --exit-code frontend/lib/api
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # / and /evals are static and need no backend.
+      - run: |
+          (PORT=8080 node .next/standalone/server.js &)
+          npx --yes wait-on@9.5.1 http://localhost:8080/
+          pnpm exec lhci autorun
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lighthouse
+          path: frontend/tests/e2e/artifacts/lighthouse
 
   compose:
     runs-on: ubuntu-latest
@@ -33,19 +108,80 @@ jobs:
       - uses: actions/checkout@v7
       - name: Validate compose and Caddyfile
         run: |
-          sed 's/change-me/ci/' .env.example > .env
+          sed 's/change-me/ci-0123456789abcdef0123456789abcdef/' .env.example > .env
           docker compose config --quiet
           docker run --rm -v "$PWD/infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
             caddy:2.11.7 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
   images:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        context: [backend, frontend]
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
       - uses: docker/build-push-action@v7
         with:
-          context: backend
+          context: ${{ matrix.context }}
           push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.context }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.context }}
+
+  e2e:
+    # The Olist CSVs aren't in the repo (licence and size); CI fetches them with Kaggle credentials.
+    runs-on: ubuntu-latest
+    env:
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Skip without dataset credentials
+        if: env.KAGGLE_KEY == ''
+        run: echo "::notice::KAGGLE_USERNAME/KAGGLE_KEY secrets not set; e2e skipped."
+      - if: env.KAGGLE_KEY != ''
+        uses: astral-sh/setup-uv@v10
+      - if: env.KAGGLE_KEY != ''
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+      - if: env.KAGGLE_KEY != ''
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Stack with data
+        if: env.KAGGLE_KEY != ''
+        run: |
+          uvx --from kaggle==2.2.4 kaggle datasets download olistbr/brazilian-ecommerce -p data/olist --unzip
+          sed 's/change-me/ci-0123456789abcdef0123456789abcdef/' .env.example > .env
+          sed -i 's/^EMBEDDING_PROVIDER=.*/EMBEDDING_PROVIDER=fake/' .env
+          make e2e-stack
+          make seed
+      - name: Playwright
+        if: env.KAGGLE_KEY != ''
+        run: |
+          cd frontend
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium webkit
+          pnpm exec playwright test
+      - uses: actions/upload-artifact@v7
+        if: always() && env.KAGGLE_KEY != ''
+        with:
+          name: playwright
+          path: frontend/tests/e2e/artifacts
+
+  eval-smoke:
+    # Recorded LLM responses: CI never calls a paid API.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest tests/evals -q

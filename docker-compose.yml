@@ -10,6 +10,12 @@ x-backend: &backend
     REDIS_URL: redis://redis:6379/0
     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     FASTEMBED_CACHE_DIR: /opt/fastembed
+    # Shell overrides for test stacks: `FAKE_LLM=true RATE_LIMIT_PER_MIN=1000 docker compose up`.
+    FAKE_LLM: ${FAKE_LLM:-false}
+    RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-10}
+    DEMO_LOGIN_PER_MIN: ${DEMO_LOGIN_PER_MIN:-5}
+    # WebKit won't send Secure cookies to http://localhost; plain-HTTP test stacks turn this off.
+    COOKIE_SECURE: ${COOKIE_SECURE:-true}
     # Least privilege: long-running services never see the target DB owner credentials.
     TARGET_DB_OWNER_PASSWORD: ""
     TARGET_ADMIN_DATABASE_URL: ""
@@ -30,6 +36,20 @@ services:
       - caddy-data:/data
     depends_on:
       api: { condition: service_healthy }
+      web: { condition: service_healthy }
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        SITE_URL: ${SITE_URL_PUBLIC:-http://localhost:8080}
+    environment:
+      SITE_URL: ${SITE_URL_PUBLIC:-http://localhost:8080}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   api:
     <<: *backend

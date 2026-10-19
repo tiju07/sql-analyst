@@ -1,0 +1,6 @@
+.next
+lib/api/schema.d.ts
+lib/api/openapi.json
+pnpm-lock.yaml
+tests/e2e/artifacts
+.lighthouseci

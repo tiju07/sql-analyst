@@ -4,12 +4,14 @@ Responses come from per-schema responders registered next to the schemas that ne
 module doesn't grow a dependency on every node.
 """
 
+import asyncio
 from collections.abc import Callable
 
 from pydantic import BaseModel
 
 from app.llm.client import Effort, LLMError, LLMResult, Usage
 
+SLOW_S = 4.0
 Responder = Callable[[str, str | None, str], BaseModel]
 _RESPONDERS: dict[type[BaseModel], Responder] = {}
 
@@ -42,6 +44,8 @@ class FakeLLM:
         effort: Effort = "medium",
     ) -> LLMResult[T]:
         self.calls.append((model, schema, prompt))
+        if "[slow]" in prompt:
+            await asyncio.sleep(SLOW_S)  # lets e2e tests press Stop mid-run
         fn = _RESPONDERS.get(schema)
         if fn is None:
             raise LLMError(f"FakeLLM has no responder for {schema.__name__}", retryable=False)

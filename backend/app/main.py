@@ -1,20 +1,24 @@
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from typing import Any
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request, Response
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from prometheus_client import make_asgi_app
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
+from pydantic.json_schema import models_json_schema
 
-from app.api import catalog, chat, connections, conversations, health, runs
+from app.api import catalog, chat, connections, conversations, feedback, health, runs, verified
 from app.auth import routes as auth
 from app.config import PRODUCT_NAME, get_settings
 from app.errors import ApiError, api_error_handler
 from app.graph.build import build_graph
+from app.graph.events import EVENT_NAMES
 from app.graph.manager import RunManager
 from app.logging import configure_logging
 from app.ratelimit import RateLimiter
@@ -87,6 +91,24 @@ for router in (
     conversations.router,
     chat.router,
     runs.router,
+    feedback.router,
+    verified.router,
 ):
     app.include_router(router, prefix="/api")
 app.mount("/api/metrics", make_asgi_app())
+
+
+def _openapi_with_events() -> dict[str, Any]:
+    """SSE payloads aren't response bodies, so add their models for client type generation."""
+    if app.openapi_schema is None:
+        schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
+        _, defs = models_json_schema(
+            [(m, "serialization") for m in EVENT_NAMES],
+            ref_template="#/components/schemas/{model}",
+        )
+        schema["components"]["schemas"].update(defs.get("$defs", {}))
+        app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = _openapi_with_events  # type: ignore[method-assign]

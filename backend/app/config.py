@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     explain_cost_limit: float | None = None
 
     rate_limit_per_min: int = 10
+    demo_login_per_min: int = 5  # per client IP
     daily_llm_budget_usd: float = 5.0
     # Input + output tokens one run may use across all its LLM calls.
     run_token_cap: int = 200_000

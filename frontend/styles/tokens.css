@@ -1,0 +1,104 @@
+/*
+ * Design tokens. One accent (petrol teal), neutral greys, light + dark.
+ * Every text/background pair here is checked for WCAG AA (see docs in ARCHITECTURE.md).
+ * shadcn components read the semantic names (--background, --primary, ...).
+ */
+:root {
+  /* palette */
+  --canvas: #fafafa;
+  --raised: #ffffff;
+  --sunken: #f1f2f4;
+  --hairline: #e4e6ea;
+  --control-edge: #8c93a0; /* 3.1:1 against white: visible input borders */
+  --ink: #16181d;
+  --ink-muted: #5b6170;
+  --accent-base: #0e7c86;
+  --accent-strong: #0b6a73;
+  --accent-wash: #e6f3f4;
+  --ok: #1f7a4d;
+  --warn: #8a5a00;
+  --bad: #c2362f;
+
+  /* semantic (shadcn contract) */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--raised);
+  --card-foreground: var(--ink);
+  --popover: var(--raised);
+  --popover-foreground: var(--ink);
+  --primary: var(--accent-base);
+  --primary-foreground: #ffffff;
+  --secondary: var(--sunken);
+  --secondary-foreground: var(--ink);
+  --muted: var(--sunken);
+  --muted-foreground: var(--ink-muted);
+  --accent: #eceef1;
+  --accent-foreground: var(--ink);
+  --destructive: var(--bad);
+  --border: var(--hairline);
+  --input: var(--control-edge);
+  --ring: var(--accent-base);
+  --sidebar: #f5f6f7;
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--accent-base);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eaecef;
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--accent-base);
+
+  /* Data series, fixed order (validated: lightness band, chroma, CVD separation, contrast).
+     Slot 1 is the brand teal stepped up in chroma so it reads as a colour, not grey. */
+  --chart-1: #00919f;
+  --chart-2: #e36a2c;
+  --chart-3: #6a55d8;
+  --chart-4: #b07d00;
+  --chart-5: #c9437a;
+  --chart-grid: #e4e6ea;
+  --chart-axis: #5b6170;
+
+  /* shape + depth: 8-pt rhythm, radii by hierarchy (controls < cards < sheets) */
+  --radius: 0.5rem;
+  --shadow-raised: 0 1px 2px rgb(22 24 29 / 0.06), 0 1px 1px rgb(22 24 29 / 0.04);
+  --shadow-overlay: 0 12px 32px rgb(22 24 29 / 0.14), 0 2px 6px rgb(22 24 29 / 0.08);
+  --duration: 160ms;
+}
+
+.dark {
+  --canvas: #0f1115;
+  --raised: #171a20;
+  --sunken: #1e2229;
+  --hairline: #2a2f38;
+  --control-edge: #6b7383;
+  --ink: #e8eaee;
+  --ink-muted: #9aa1ae;
+  --accent-base: #3fb8c2;
+  --accent-strong: #6fcdd4;
+  --accent-wash: #12302f;
+  --ok: #4cc38a;
+  --warn: #e3b341;
+  --bad: #f2766e;
+
+  --primary-foreground: #06282b;
+  --sidebar-primary-foreground: #06282b;
+  --accent: #232832;
+  --sidebar: #13161b;
+  --sidebar-accent: #20252d;
+
+  --chart-1: #16a3ae;
+  --chart-2: #df6d34;
+  --chart-3: #8070e8;
+  --chart-4: #bd8c12;
+  --chart-5: #d25a88;
+  --chart-grid: #2a2f38;
+  --chart-axis: #9aa1ae;
+
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration: 0ms;
+  }
+}

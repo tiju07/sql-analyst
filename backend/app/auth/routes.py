@@ -88,7 +88,9 @@ async def demo_login(
 ) -> UserOut:
     if not rt.settings.demo_login_enabled:
         raise not_found("Demo login")
-    await rate_limit(limiter, f"demo:{client_ip(request)}", per_minute=5)
+    await rate_limit(
+        limiter, f"demo:{client_ip(request)}", per_minute=rt.settings.demo_login_per_min
+    )
     user = await session.scalar(
         select(User).where(User.email == PERSONAS[persona].email, User.is_demo)
     )

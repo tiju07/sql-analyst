@@ -1,4 +1,4 @@
-.PHONY: env up down logs seed smoke test test-unit lint fmt typecheck check
+.PHONY: env up down logs seed smoke types test test-unit e2e e2e-stack lint fmt typecheck check
 
 COMPOSE := docker compose
 BACKEND := cd backend && uv run
@@ -26,6 +26,20 @@ seed: ## Load Olist + RLS, seed users/connection, sync the catalog
 
 smoke: ## Scripted curl session against the running stack (demo login, stream, clarification)
 	scripts/curl_demo.sh
+
+types: ## Regenerate the frontend API types from the backend OpenAPI schema
+	cd backend && uv run python -m scripts.export_openapi ../frontend/lib/api/openapi.json
+	cd frontend && pnpm exec openapi-typescript lib/api/openapi.json -o lib/api/schema.d.ts
+
+# Fake LLM, generous limits, and non-Secure cookies (WebKit drops Secure cookies on http://localhost).
+E2E_ENV := FAKE_LLM=true RATE_LIMIT_PER_MIN=1000 DEMO_LOGIN_PER_MIN=1000 COOKIE_SECURE=false
+
+e2e-stack: ## Stack configured for end-to-end tests
+	$(E2E_ENV) $(COMPOSE) up -d --build --wait
+	$(COMPOSE) exec -T redis redis-cli FLUSHDB
+
+e2e: e2e-stack ## Playwright on iPhone 13, Pixel 7, iPad and desktop (with axe checks)
+	cd frontend && pnpm exec playwright test
 
 test: ## All backend tests (integration tests start Postgres via testcontainers)
 	$(BACKEND) pytest --cov=app --cov-report=term-missing

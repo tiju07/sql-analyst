@@ -12,3 +12,5 @@ data/olist/*.csv
 node_modules/
 .next/
 .DS_Store
+frontend/tests/e2e/artifacts/
+frontend/.lighthouseci/
