@@ -63,6 +63,16 @@ services:
     <<: *backend
     command: ["python", "-m", "app.workers"]
 
+  mcp:
+    <<: *backend
+    command: ["python", "-m", "app.mcp_server"]
+    healthcheck:
+      # Unauthenticated requests get 401 by design; any HTTP answer means the server is up.
+      test: ["CMD", "python", "-c", "import urllib.request as u, urllib.error as e\ntry: u.urlopen('http://localhost:8001/mcp')\nexcept e.HTTPError: pass"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   # One-shot tooling: `docker compose run --rm seed python -m scripts.<name>`.
   seed:
     <<: *backend

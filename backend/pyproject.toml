@@ -13,6 +13,7 @@ dependencies = [
     "fastembed>=0.9.0",
     "langgraph>=1.2.16",
     "langgraph-checkpoint-postgres>=3.2.0",
+    "mcp>=2.3.0",
     "openai>=3.35.1",
     "opentelemetry-exporter-otlp-proto-http>=1.45.1",
     "opentelemetry-sdk>=1.45.1",

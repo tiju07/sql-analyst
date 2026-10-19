@@ -61,6 +61,8 @@ class Settings(BaseSettings):
 
     mcp_api_token: SecretStr | None = None
     mcp_persona: Literal["admin", "analyst", "regional"] = "analyst"
+    # Host headers the MCP server accepts (DNS-rebinding protection); add your domain in prod.
+    mcp_allowed_hosts: str = "localhost,localhost:*,127.0.0.1:*,mcp:*"
 
     @field_validator("session_secret", "rls_signing_secret")
     @classmethod

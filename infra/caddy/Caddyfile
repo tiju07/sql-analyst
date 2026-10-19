@@ -15,6 +15,13 @@
 		}
 	}
 
+	# MCP server (streamable HTTP, bearer token checked by the server itself).
+	handle /mcp* {
+		reverse_proxy mcp:8001 {
+			flush_interval -1
+		}
+	}
+
 	# Prometheus scrapes api:8000 inside the network; never expose it publicly.
 	handle /api/metrics {
 		respond 404
