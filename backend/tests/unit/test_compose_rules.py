@@ -60,7 +60,9 @@ def test_table_for_many_categories() -> None:
 
 def test_pie_only_for_small_share_breakdowns() -> None:
     rows = [["credit_card", 0.74], ["boleto", 0.19], ["voucher", 0.07]]
-    assert choose_chart([col("payment_type", None), col("share", "percent")], rows, "t").mark == "pie"
+    assert (
+        choose_chart([col("payment_type", None), col("share", "percent")], rows, "t").mark == "pie"
+    )
 
 
 def test_scatter_for_two_measures() -> None:
