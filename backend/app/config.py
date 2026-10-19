@@ -49,11 +49,14 @@ class Settings(BaseSettings):
 
     rate_limit_per_min: int = 10
     daily_llm_budget_usd: float = 5.0
+    # Input + output tokens one run may use across all its LLM calls.
+    run_token_cap: int = 200_000
     fake_llm: bool = False
 
     otel_exporter_otlp_endpoint: str | None = None
     langfuse_public_key: str | None = None
     langfuse_secret_key: SecretStr | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
 
     mcp_api_token: SecretStr | None = None
     mcp_persona: Literal["admin", "analyst", "regional"] = "analyst"

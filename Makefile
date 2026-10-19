@@ -1,4 +1,4 @@
-.PHONY: env up down logs seed test test-unit lint fmt typecheck check
+.PHONY: env up down logs seed smoke test test-unit lint fmt typecheck check
 
 COMPOSE := docker compose
 BACKEND := cd backend && uv run
@@ -23,6 +23,9 @@ seed: ## Load Olist + RLS, seed users/connection, sync the catalog
 	$(COMPOSE) run --rm --build seed python -m scripts.load_olist --data-dir /data/olist
 	$(COMPOSE) run --rm seed python -m scripts.seed_users
 	$(COMPOSE) run --rm seed python -m scripts.sync_catalog
+
+smoke: ## Scripted curl session against the running stack (demo login, stream, clarification)
+	scripts/curl_demo.sh
 
 test: ## All backend tests (integration tests start Postgres via testcontainers)
 	$(BACKEND) pytest --cov=app --cov-report=term-missing

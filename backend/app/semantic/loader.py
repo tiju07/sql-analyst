@@ -9,7 +9,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import SemanticLayerRow, SemanticMetric
+from app.models import Connection, SemanticLayerRow, SemanticMetric
 from app.semantic.models import SemanticLayer
 
 METRICS_PATH = Path(__file__).resolve().parents[2] / "semantic" / "metrics.yaml"
@@ -19,13 +19,22 @@ def parse_layer(text: str) -> SemanticLayer:
     return SemanticLayer.model_validate(yaml.safe_load(text))
 
 
+# Only the demo connection ships a semantic layer; others (e.g. BIRD databases) start empty.
+SEEDED_CONNECTION = "olist"
+EMPTY_LAYER = "metrics: []\n"
+
+
 async def get_layer_yaml(session: AsyncSession, connection_id: uuid.UUID) -> str:
-    """Current YAML for a connection, seeding it from the bundled file on first use."""
+    """Current YAML for a connection, seeding the demo connection from the bundled file."""
     row = await session.get(SemanticLayerRow, connection_id)
-    if row is None:
-        row = SemanticLayerRow(connection_id=connection_id, yaml=METRICS_PATH.read_text())
-        session.add(row)
-        await session.flush()
+    if row is not None:
+        return row.yaml
+    conn = await session.get(Connection, connection_id)
+    if conn is None or conn.name != SEEDED_CONNECTION:
+        return EMPTY_LAYER
+    row = SemanticLayerRow(connection_id=connection_id, yaml=METRICS_PATH.read_text())
+    session.add(row)
+    await session.flush()
     return row.yaml
 
 

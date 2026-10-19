@@ -47,7 +47,7 @@ class FakeLLM:
             raise LLMError(f"FakeLLM has no responder for {schema.__name__}", retryable=False)
         value = fn(system, context, prompt)
         assert isinstance(value, schema)
-        # Token counts are a rough length proxy so budget/cost code paths still run.
+        # Token counts are a rough length proxy so usage code paths still run; it costs nothing.
         tokens_in = (len(system) + len(context or "") + len(prompt)) // 4
         tokens_out = len(value.model_dump_json()) // 4
-        return LLMResult(value, Usage.priced(model, tokens_in, tokens_out, 0, 0), model)
+        return LLMResult(value, Usage(tokens_in, tokens_out), model)

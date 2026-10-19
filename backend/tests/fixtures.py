@@ -11,9 +11,12 @@ from testcontainers.community.redis import RedisContainer
 
 from alembic import command
 from app.config import Settings
-from app.main import app
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from psycopg.rows import dict_row
+from psycopg_pool import AsyncConnectionPool
+
+from app.main import app, attach_state
 from app.models import Connection
-from app.ratelimit import RateLimiter
 from app.runtime import Runtime
 from app.workers.catalog_sync import sync_catalog
 from scripts.load_olist import apply_schema, apply_security
@@ -108,11 +111,24 @@ async def rt(
     await runtime.close()
 
 
+@pytest.fixture(scope="session")
+async def checkpointer(app_pg: PostgresContainer, rt: Runtime) -> AsyncIterator[AsyncPostgresSaver]:
+    pool = AsyncConnectionPool(
+        app_pg.get_connection_url(),
+        kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
+        open=False,
+    )
+    await pool.open()
+    saver = AsyncPostgresSaver(pool)  # type: ignore[arg-type]
+    await saver.setup()
+    yield saver
+    await pool.close()
+
+
 @pytest.fixture
-async def api(rt: Runtime) -> AsyncIterator[AsyncClient]:
-    await rt.redis.flushdb()  # fresh rate-limit buckets per test
-    app.state.rt = rt
-    app.state.limiter = RateLimiter(rt.redis)
+async def api(rt: Runtime, checkpointer: AsyncPostgresSaver) -> AsyncIterator[AsyncClient]:
+    await rt.redis.flushdb()  # fresh rate-limit buckets and budget per test
+    attach_state(app, rt, checkpointer)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
 

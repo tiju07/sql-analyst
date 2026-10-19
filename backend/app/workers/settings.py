@@ -9,12 +9,15 @@ from arq.connections import RedisSettings
 from app.config import get_settings
 from app.logging import configure_logging
 from app.runtime import Runtime
+from app.telemetry import setup_tracing
 from app.workers.catalog_sync import sync_catalog
 
 
 async def startup(ctx: dict[str, Any]) -> None:
     configure_logging()
-    ctx["rt"] = await Runtime.create(get_settings())
+    settings = get_settings()
+    setup_tracing(settings, "sql-analyst-worker")
+    ctx["rt"] = await Runtime.create(settings)
 
 
 async def shutdown(ctx: dict[str, Any]) -> None:

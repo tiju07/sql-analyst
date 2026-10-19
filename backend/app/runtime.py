@@ -20,6 +20,8 @@ from app.sql.executor import PostgresExecutor
 
 def build_llm(s: Settings) -> LLMClient:
     if s.fake_llm:
+        import app.graph.fake  # noqa: F401  (registers the agent's canned responders)
+
         return FakeLLM()
     if s.llm_provider == "openai_compat":
         return OpenAICompatClient(

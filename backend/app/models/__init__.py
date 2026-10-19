@@ -208,7 +208,7 @@ class QueryRun(TimestampMixin, Base):
     error_code: Mapped[str | None] = mapped_column(Text)
     error_message: Mapped[str | None] = mapped_column(Text)
     trace_id: Mapped[str | None] = mapped_column(Text)
-    # Daily budget check sums cost_usd by created_at.
+    context: Mapped[dict[str, Any] | None]  # retrieved tables/metrics/examples (Inspector)
     __table_args__ = (Index("ix_query_runs_created_at", "created_at"),)
 
 
