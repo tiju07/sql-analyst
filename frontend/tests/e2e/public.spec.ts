@@ -8,7 +8,9 @@ for (const scheme of ["light", "dark"] as const) {
 
     test("landing page", async ({ page }, info) => {
       await page.goto("/")
-      await expect(page.getByRole("heading", { level: 1 })).toHaveText("Plain-English questions.SQL you can check.")
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        /Plain-English questions\.\s*SQL you can check\./,
+      )
       await expect(page.getByText("These five states account for")).toBeVisible()
       await expectNoHorizontalScroll(page)
       await expectAccessible(page)

@@ -1,0 +1,42 @@
+# Production overrides for a single host: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Images come from GHCR (built by .github/workflows/deploy.yml); Caddy serves SITE_ADDRESS with automatic HTTPS.
+name: sql-analyst
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  caddy:
+    <<: *restart
+    ports: !override ["80:80", "443:443", "443:443/udp"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS to your domain}
+  web:
+    <<: *restart
+    image: ghcr.io/${GHCR_OWNER:?}/sql-analyst-web:${IMAGE_TAG:?}
+  api:
+    <<: *restart
+    image: ghcr.io/${GHCR_OWNER:?}/sql-analyst-backend:${IMAGE_TAG:?}
+  worker:
+    <<: *restart
+    image: ghcr.io/${GHCR_OWNER:?}/sql-analyst-backend:${IMAGE_TAG:?}
+  mcp:
+    <<: *restart
+    image: ghcr.io/${GHCR_OWNER:?}/sql-analyst-backend:${IMAGE_TAG:?}
+  seed:
+    image: ghcr.io/${GHCR_OWNER:?}/sql-analyst-backend:${IMAGE_TAG:?}
+  # Databases and Redis stay on the internal network only.
+  app-db:
+    <<: *restart
+    ports: !reset []
+  target-db:
+    <<: *restart
+    ports: !reset []
+  redis:
+    <<: *restart
+    ports: !reset []
+  otel-collector:
+    <<: *restart
+  jaeger:
+    <<: *restart
+    ports: !reset []

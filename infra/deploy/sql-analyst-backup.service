@@ -1,0 +1,9 @@
+[Unit]
+Description=SQL Analyst app DB backup to S3
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sql-analyst
+EnvironmentFile=/opt/sql-analyst/.env
+ExecStart=/opt/sql-analyst/infra/deploy/backup.sh
