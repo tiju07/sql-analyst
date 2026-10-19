@@ -1,5 +1,17 @@
 # Business metric definitions for the Olist connection. Expressions use unqualified olist table
 # names; the agent adds joins. Admins edit this via PUT /api/semantic/metrics (validated).
+# Facts about the data the agent must know (verified against the loaded dataset).
+notes:
+  - >-
+    Orders span 2016-09-04 to 2018-10-17, but only 20 orders fall after 2018-08-31. Resolve
+    relative periods ("last quarter", "this year") against the latest complete data, not
+    today's date: the last full month is 2018-08 and the last full quarter is 2018 Q2
+    (Q3 2018 ends with almost no September data). State the period used as a caveat.
+  - Monetary values are in Brazilian reais (BRL).
+  - >-
+    customer_id identifies a customer per order; use customer_unique_id to count or follow
+    real customers across orders.
+
 metrics:
   - name: revenue
     description: Product revenue in BRL. Item price only, excludes freight.
