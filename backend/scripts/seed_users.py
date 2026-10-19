@@ -14,8 +14,8 @@ from app.db import make_engine
 from app.models import Connection, Role, User
 
 
-async def main() -> None:
-    engine = make_engine(os.environ["APP_DATABASE_URL"])
+async def seed(dsn: str, admin: tuple[str, str] | None = None) -> int:
+    engine = make_engine(dsn)
     rows = [
         {
             "email": p.email,
@@ -27,11 +27,11 @@ async def main() -> None:
         }
         for p in PERSONAS.values()
     ]
-    if email := os.environ.get("SEED_ADMIN_EMAIL"):
+    if admin:
         rows.append(
             {
-                "email": email,
-                "password_hash": hash_password(os.environ["SEED_ADMIN_PASSWORD"]),
+                "email": admin[0].lower(),
+                "password_hash": hash_password(admin[1]),
                 "display_name": "Admin",
                 "role": Role.admin,
                 "allowed_states": None,
@@ -57,7 +57,14 @@ async def main() -> None:
             .on_conflict_do_nothing(index_elements=[Connection.name])
         )
     await engine.dispose()
-    print(f"Seeded {len(rows)} users and the olist connection")
+    return len(rows)
+
+
+async def main() -> None:
+    email = os.environ.get("SEED_ADMIN_EMAIL")
+    admin = (email, os.environ["SEED_ADMIN_PASSWORD"]) if email else None
+    n = await seed(os.environ["APP_DATABASE_URL"], admin)
+    print(f"Seeded {n} users and the olist connection")
 
 
 if __name__ == "__main__":

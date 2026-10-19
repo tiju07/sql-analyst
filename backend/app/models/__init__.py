@@ -12,6 +12,7 @@ from typing import Any
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     ARRAY,
+    BigInteger,
     Computed,
     DateTime,
     Enum,
@@ -240,7 +241,23 @@ class VerifiedQuery(TimestampMixin, Base):
 
 class AuditLog(TimestampMixin, Base):
     __tablename__ = "audit_log"
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     action: Mapped[str] = mapped_column(Text)
     detail: Mapped[dict[str, Any] | None]
+
+
+class SemanticLayerRow(Base):
+    """Current semantic-layer YAML for a connection; semantic_metrics is derived from it."""
+
+    __tablename__ = "semantic_layers"
+    connection_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("connections.id", ondelete="CASCADE"), primary_key=True
+    )
+    yaml: Mapped[str] = mapped_column(Text)
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

@@ -11,8 +11,9 @@ from alembic import command
 pytestmark = pytest.mark.integration
 
 
+# Own container: this test downgrades to base, which would break the shared session stack.
 @pytest.fixture(scope="module")
-def app_pg() -> Iterator[PostgresContainer]:
+def fresh_pg() -> Iterator[PostgresContainer]:
     with PostgresContainer("pgvector/pgvector:0.8.7-pg16", driver=None) as container:
         yield container
 
@@ -23,8 +24,8 @@ def _alembic(url: str) -> Config:
     return cfg
 
 
-async def test_upgrade_downgrade_roundtrip(app_pg: PostgresContainer) -> None:
-    url = app_pg.get_connection_url()
+async def test_upgrade_downgrade_roundtrip(fresh_pg: PostgresContainer) -> None:
+    url = fresh_pg.get_connection_url()
     # alembic/env.py calls asyncio.run, so it must run off this test's event loop.
     await asyncio.to_thread(command.upgrade, _alembic(url), "head")
     conn = await asyncpg.connect(url)

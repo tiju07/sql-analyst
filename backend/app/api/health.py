@@ -27,20 +27,23 @@ async def health() -> Health:
 
 @router.get("/ready", responses={503: {"model": Ready}})
 async def ready(request: Request, response: Response) -> Ready:
-    state = request.app.state
+    rt = request.app.state.rt
 
-    async def db(engine_name: str) -> bool:
-        async with getattr(state, engine_name).connect() as conn:
+    async def app_db() -> bool:
+        async with rt.app_engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         return True
 
+    async def target_db() -> bool:
+        async with rt.target_pool.acquire() as conn:
+            await conn.fetchval("SELECT 1")
+        return True
+
     async def redis() -> bool:
-        return bool(await state.redis.ping())
+        return bool(await rt.redis.ping())
 
     names = ("app_db", "target_db", "redis")
-    results = await asyncio.gather(
-        db("app_engine"), db("target_engine"), redis(), return_exceptions=True
-    )
+    results = await asyncio.gather(app_db(), target_db(), redis(), return_exceptions=True)
     checks = {n: r is True for n, r in zip(names, results, strict=True)}
     ok = all(checks.values())
     if not ok:

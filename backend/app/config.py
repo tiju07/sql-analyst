@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import PostgresDsn, RedisDsn, SecretStr
+from pydantic import PostgresDsn, RedisDsn, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Single source of truth for the product name (frontend reads it from /api/health).
@@ -16,24 +16,30 @@ class Settings(BaseSettings):
     app_database_url: PostgresDsn
     # Read-only role (analyst_ro); the only credentials the agent ever uses on the target DB.
     target_database_url: PostgresDsn
+    # Schema in the target DB that the agent may query (the guard's allow-list comes from it).
+    target_schema: str = "olist"
     redis_url: RedisDsn = RedisDsn("redis://localhost:6379/0")
 
     session_secret: SecretStr
     # HMAC key that signs app.allowed_states; must match the value stored in the target DB.
     rls_signing_secret: SecretStr
     demo_login_enabled: bool = True
+    # Browsers accept Secure cookies on http://localhost, so this stays on in dev too.
+    cookie_secure: bool = True
 
     llm_provider: Literal["anthropic", "openai_compat"] = "anthropic"
     anthropic_api_key: SecretStr | None = None
     llm_model_sql: str = "claude-sonnet-5-5"
     llm_model_fast: str = "claude-haiku-5-5"
+    llm_effort_sql: Literal["low", "medium", "high"] = "medium"
     openai_compat_base_url: str | None = None
     openai_compat_api_key: SecretStr | None = None
     openai_compat_model: str | None = None
 
-    embedding_provider: Literal["fastembed", "openai_compat"] = "fastembed"
+    embedding_provider: Literal["fastembed", "openai_compat", "fake"] = "fastembed"
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_dim: int = 384
+    fastembed_cache_dir: str | None = None
 
     n_candidates: int = 3
     max_repairs: int = 2
@@ -51,6 +57,13 @@ class Settings(BaseSettings):
 
     mcp_api_token: SecretStr | None = None
     mcp_persona: Literal["admin", "analyst", "regional"] = "analyst"
+
+    @field_validator("session_secret", "rls_signing_secret")
+    @classmethod
+    def _long_enough(cls, v: SecretStr) -> SecretStr:
+        if len(v.get_secret_value()) < 32:
+            raise ValueError("must be at least 32 characters (`make env` generates one)")
+        return v
 
 
 @lru_cache

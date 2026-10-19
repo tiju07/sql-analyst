@@ -47,7 +47,10 @@ def test_allows_read_queries(sql: str) -> None:
         ("INSERT INTO olist.orders VALUES (1)", "Only SELECT"),
         ("UPDATE olist.orders SET order_status = 'x'", "Only SELECT"),
         ("DELETE FROM olist.orders", "Only SELECT"),
-        ("MERGE INTO olist.orders o USING olist.customers c ON true WHEN MATCHED THEN DELETE", "Only SELECT"),
+        (
+            "MERGE INTO olist.orders o USING olist.customers c ON true WHEN MATCHED THEN DELETE",
+            "Only SELECT",
+        ),
         ("TRUNCATE olist.orders", "Only SELECT"),
         ("CREATE TABLE x AS SELECT 1", "Only SELECT"),
         ("ALTER TABLE olist.orders ADD COLUMN x int", "Only SELECT"),

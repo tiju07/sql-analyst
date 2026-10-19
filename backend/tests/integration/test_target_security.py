@@ -7,7 +7,7 @@ import asyncpg
 import pytest
 
 from app.sql.scope import scope_token
-from tests.integration.conftest import SIGNING_KEY
+from tests.fixtures import SIGNING_KEY
 
 pytestmark = pytest.mark.integration
 

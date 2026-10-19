@@ -19,9 +19,10 @@ down:
 logs:
 	$(COMPOSE) logs -f --tail=100
 
-seed: ## Load Olist + RLS into the target DB, seed users and the connection
+seed: ## Load Olist + RLS, seed users/connection, sync the catalog
 	$(COMPOSE) run --rm --build seed python -m scripts.load_olist --data-dir /data/olist
 	$(COMPOSE) run --rm seed python -m scripts.seed_users
+	$(COMPOSE) run --rm seed python -m scripts.sync_catalog
 
 test: ## All backend tests (integration tests start Postgres via testcontainers)
 	$(BACKEND) pytest --cov=app --cov-report=term-missing

@@ -9,9 +9,11 @@ x-backend: &backend
     TARGET_DATABASE_URL: postgresql://analyst_ro:${ANALYST_RO_PASSWORD}@target-db:5432/olist
     REDIS_URL: redis://redis:6379/0
     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    FASTEMBED_CACHE_DIR: /opt/fastembed
     # Least privilege: long-running services never see the target DB owner credentials.
     TARGET_DB_OWNER_PASSWORD: ""
     TARGET_ADMIN_DATABASE_URL: ""
+  volumes: [fastembed-cache:/opt/fastembed]
   depends_on:
     app-db: { condition: service_healthy }
     target-db: { condition: service_healthy }
@@ -37,6 +39,10 @@ services:
       timeout: 3s
       retries: 20
 
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.workers"]
+
   # One-shot tooling: `docker compose run --rm seed python -m scripts.<name>`.
   seed:
     <<: *backend
@@ -44,7 +50,7 @@ services:
     environment:
       <<: *backend-env
       TARGET_ADMIN_DATABASE_URL: postgresql://olist_owner:${TARGET_DB_OWNER_PASSWORD}@target-db:5432/olist
-    volumes: [./data/olist:/data/olist:ro]
+    volumes: [fastembed-cache:/opt/fastembed, ./data/olist:/data/olist:ro]
 
   app-db:
     image: pgvector/pgvector:0.8.7-pg16
@@ -90,6 +96,7 @@ services:
     ports: ["127.0.0.1:16686:16686"]
 
 volumes:
+  fastembed-cache:
   app-db:
   target-db:
   caddy-data:

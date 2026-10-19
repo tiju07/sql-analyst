@@ -8,13 +8,16 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-install-project
 
+# Embedding model downloads on first use into /opt/fastembed (a compose volume shared by api/worker).
+ENV FASTEMBED_CACHE_DIR=/opt/fastembed
+RUN useradd --system --uid 10001 app && mkdir -p /opt/fastembed && chown app /opt/fastembed
+
 COPY alembic.ini ./
 COPY alembic ./alembic
 COPY app ./app
 COPY scripts ./scripts
 COPY semantic ./semantic
 
-RUN useradd --system --uid 10001 app
 USER app
 EXPOSE 8000
 CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips '*'"]
