@@ -7,6 +7,7 @@ database can't smuggle in something the guard never saw. The DB role and RLS rem
 backstop if this module has a bug.
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Literal
 
@@ -15,6 +16,9 @@ from sqlglot import expressions as exp
 from sqlglot.errors import ParseError
 
 from app.sql.dialects import Dialect
+
+# sqlglot warns when it falls back to a raw Command (EXPLAIN, VACUUM, ...); we reject those anyway.
+logging.getLogger("sqlglot").setLevel(logging.ERROR)
 
 GuardCode = Literal["parse_error", "unsafe", "unknown_table"]
 

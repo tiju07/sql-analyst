@@ -44,10 +44,21 @@ dev = [
     "testcontainers[postgres,redis]>=4.15.0",
     "types-pyyaml>=6.0.12.20260906",
 ]
+evals = [
+    "func-timeout>=4.3.5",
+    "psycopg2-binary>=2.9.13",
+    "pymysql>=1.2.3",
+]
+
+[tool.uv]
+# The official BIRD scorer's dependencies are needed by the eval tests too.
+default-groups = ["dev", "evals"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py314"
+# Vendored upstream benchmark code, kept byte-for-byte.
+extend-exclude = ["evals/bird_minidev/official_eval"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "BLE", "S", "ASYNC", "RUF", "SIM", "PTH"]
@@ -55,6 +66,9 @@ ignore = ["S101"]  # asserts are fine in tests and self-checks
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106", "S608", "E501"]
+# Static gold SQL constants (no external input), long by nature.
+"evals/golden/build_golden.py" = ["S608", "E501"]
+"evals/hostile.py" = ["E501"]
 # Identifiers come from pg_catalog/sqlite_master and are double-quoted by _q().
 "app/sql/introspect.py" = ["S608"]
 "alembic/**" = ["E501"]
@@ -62,7 +76,8 @@ ignore = ["S101"]  # asserts are fine in tests and self-checks
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["app"]
+files = ["app", "evals"]
+exclude = ["evals/bird_minidev/official_eval/"]
 
 [[tool.mypy.overrides]]
 module = ["pgvector.*", "testcontainers.*"]

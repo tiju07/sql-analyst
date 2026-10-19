@@ -1,0 +1,38 @@
+# Each step adds one component on top of the previous one; the model stays fixed.
+# Clarification is off everywhere: benchmark questions can't be answered back.
+ablations:
+  - id: a_full_schema
+    label: Full schema, zero-shot
+    schema_linking: false
+    value_retrieval: false
+    few_shot: false
+    n_candidates: 1
+    max_repairs: 0
+  - id: b_schema_linking
+    label: "+ schema linking"
+    schema_linking: true
+    value_retrieval: false
+    few_shot: false
+    n_candidates: 1
+    max_repairs: 0
+  - id: c_value_retrieval
+    label: "+ value retrieval"
+    schema_linking: true
+    value_retrieval: true
+    few_shot: false
+    n_candidates: 1
+    max_repairs: 0
+  - id: d_few_shot
+    label: "+ few-shot"
+    schema_linking: true
+    value_retrieval: true
+    few_shot: true
+    n_candidates: 1
+    max_repairs: 0
+  - id: e_full
+    label: "+ 3 candidates and repair (full system)"
+    schema_linking: true
+    value_retrieval: true
+    few_shot: true
+    n_candidates: 3
+    max_repairs: 2

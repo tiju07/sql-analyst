@@ -36,16 +36,16 @@ def failure(candidates: list[Candidate]) -> AgentError:
     if candidates and all(c["status"] == "blocked" for c in candidates):
         reason = candidates[0]["attempts"][-1]["error"] or "unsafe query"
         return AgentError(
-            code=ErrorCode.BLOCKED_UNSAFE, message=f"Blocked: {reason}", retryable=False
+            code=ErrorCode.BLOCKED_UNSAFE.value, message=f"Blocked: {reason}", retryable=False
         )
     if any(a["kind"] == "timeout" for c in candidates for a in c["attempts"]):
         return AgentError(
-            code=ErrorCode.QUERY_TIMEOUT,
+            code=ErrorCode.QUERY_TIMEOUT.value,
             message="The query took too long. Try a narrower question (a period or a segment).",
             retryable=True,
         )
     return AgentError(
-        code=ErrorCode.NO_ANSWER,
+        code=ErrorCode.NO_ANSWER.value,
         message="I couldn't write a query that answers this. Try rephrasing or adding detail.",
         retryable=True,
     )

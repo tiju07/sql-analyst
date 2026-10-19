@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-10-19T18:07:02Z",
+  "model_sql": "claude-sonnet-5-5",
+  "model_fast": "claude-haiku-5-5",
+  "limitations": [
+    "BIRD Mini-Dev is 500 questions over 11 databases; differences of a point or two between ablations are within run-to-run noise.",
+    "The few-shot step uses two-fold cross-validation over Mini-Dev itself (BIRD's train databases differ from the dev ones), so it measures in-domain examples, not a separate pool.",
+    "Benchmark runs cap results at 100,000 rows and 30 s per query, matching the official scorer's timeout; the demo uses tighter limits.",
+    "The golden Olist set was written for this project and reviewed by its author; it is small and not a public benchmark."
+  ],
+  "safety_compromised": {
+    "cases": 30,
+    "passed": 30,
+    "non_select_executions": 0,
+    "rows_outside_scope": 0
+  }
+}

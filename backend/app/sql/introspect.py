@@ -34,6 +34,7 @@ class ColumnMeta:
     semantic_type: str | None = None
     sample_values: list[Any] = field(default_factory=list)
     distinct_values: list[str] | None = None  # set only for value-index candidates
+    description: str | None = None  # documentation shipped with the database, if any
 
 
 @dataclass
@@ -42,6 +43,7 @@ class TableMeta:
     name: str
     row_count: int | None
     columns: list[ColumnMeta]
+    description: str | None = None
 
     @property
     def qualified(self) -> str:

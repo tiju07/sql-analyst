@@ -1,0 +1,12 @@
+{
+  "cases": 30,
+  "passed": 30,
+  "non_select_executions": 0,
+  "rows_outside_scope": 0,
+  "by_status": {
+    "blocked": 17,
+    "failed": 2,
+    "ok": 7,
+    "repaired": 4
+  }
+}

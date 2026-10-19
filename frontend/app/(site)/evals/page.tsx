@@ -91,6 +91,7 @@ export default async function EvalsPage() {
   const withEvidence = s?.bird?.runs.filter((r) => r.evidence) ?? []
   const withoutEvidence = s?.bird?.runs.filter((r) => !r.evidence) ?? []
   const full = withEvidence.find((r) => r.ablation.startsWith("e"))
+  const modelRun = Boolean(s?.bird || s?.golden)
   return (
     <>
       <SiteHeader />
@@ -101,7 +102,7 @@ export default async function EvalsPage() {
           from a recorded run; nothing is estimated.
         </p>
 
-        {!s ? (
+        {!modelRun || !s ? (
           <section className="mt-10 rounded-lg border border-dashed p-6">
             <h2 className="font-medium">No benchmark has been run yet</h2>
             <p className="text-muted-foreground mt-1 text-sm">
@@ -221,44 +222,76 @@ export default async function EvalsPage() {
                 </table>
               </section>
             )}
-            {(s.golden || s.safety) && (
-              <section className="mt-10 grid gap-8 sm:grid-cols-2">
-                {s.golden && (
-                  <div>
-                    <h2 className="text-xl font-semibold tracking-tight">Golden Olist set</h2>
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      {s.golden.questions} business questions with reviewed SQL.
-                    </p>
-                    <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                      <dt>Execution match</dt>
-                      <dd className="tabular">{formatValue(s.golden.ex, "percent")}</dd>
-                      <dt>Clarified correctly</dt>
-                      <dd className="tabular">{formatValue(s.golden.clarify_accuracy, "percent")}</dd>
-                    </dl>
-                  </div>
-                )}
-                {s.safety && (
-                  <div>
-                    <h2 className="text-xl font-semibold tracking-tight">Safety red team</h2>
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      {s.safety.cases} adversarial prompts: writes, data dumps, sleeps, prompt injection, RLS bypass.
-                    </p>
-                    <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                      <dt>Cases passed</dt>
-                      <dd className="tabular">
-                        {s.safety.passed} of {s.safety.cases}
-                      </dd>
-                      <dt>Non-SELECT executed</dt>
-                      <dd className="tabular">{s.safety.non_select_executions}</dd>
-                      <dt>Rows outside scope</dt>
-                      <dd className="tabular">{s.safety.rows_outside_scope}</dd>
-                    </dl>
-                  </div>
-                )}
+            {s.golden && (
+              <section className="mt-10">
+                <h2 className="text-xl font-semibold tracking-tight">Golden Olist set</h2>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  {s.golden.questions} business questions with reviewed SQL.
+                </p>
+                <dl className="mt-3 grid max-w-sm grid-cols-2 gap-2 text-sm">
+                  <dt>Execution match</dt>
+                  <dd className="tabular">{formatValue(s.golden.ex, "percent")}</dd>
+                  <dt>Clarified correctly</dt>
+                  <dd className="tabular">{formatValue(s.golden.clarify_accuracy, "percent")}</dd>
+                </dl>
               </section>
             )}
           </>
         )}
+
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold tracking-tight">Safety red team</h2>
+          <p className="text-muted-foreground mt-2 max-w-prose text-sm">
+            30 adversarial requests: writes and DDL, data dumps, sleeps and runaway queries, attempts to read or change
+            the row-level-security scope, prompt injection in the question, in a column description and in a stored
+            value, and nine attempts by the São Paulo manager to see other states.
+          </p>
+          <div className="mt-4 overflow-x-auto rounded-lg border">
+            <table className="w-full text-sm">
+              <caption className="sr-only">Safety suite results by model</caption>
+              <thead className="bg-muted text-left">
+                <tr>
+                  <th scope="col" className="px-3 py-2 font-medium">
+                    Model
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">
+                    Passed
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">
+                    Non-SELECT executed
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">
+                    Rows outside scope
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {(
+                  [
+                    ["Real model", s?.safety],
+                    ["Compromised stand-in that always attacks", s?.safety_compromised],
+                  ] as const
+                ).map(([label, run]) => (
+                  <tr key={label} className="border-t">
+                    <th scope="row" className="px-3 py-2 text-left font-normal">
+                      {label}
+                    </th>
+                    <td className="tabular px-3 py-2 text-right">
+                      {run ? `${run.passed} of ${run.cases}` : "Not run yet"}
+                    </td>
+                    <td className="tabular px-3 py-2 text-right">{run ? run.non_select_executions : "—"}</td>
+                    <td className="tabular px-3 py-2 text-right">{run ? run.rows_outside_scope : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-muted-foreground mt-3 max-w-prose text-sm">
+            The compromised stand-in replaces the model with one that writes the attack every time. Passing with it
+            shows the SQL guard, the read-only database role and row-level security hold on their own, whatever the
+            model does.
+          </p>
+        </section>
 
         <section className="mt-14">
           <h2 className="text-xl font-semibold tracking-tight">Method</h2>

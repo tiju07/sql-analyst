@@ -105,6 +105,8 @@ async def _upsert(
             )
             session.add(table)
         table.row_count = meta.row_count
+        if meta.description and table.description is None:
+            table.description, table.description_source = meta.description, DescriptionSource.human
         keep[meta.qualified] = table
     for stale in existing.values():
         await session.delete(stale)
@@ -129,6 +131,8 @@ async def _upsert(
             col.sample_values = cm.sample_values
             if col.semantic_type is None:  # keep admin overrides
                 col.semantic_type = cm.semantic_type
+            if cm.description and col.description is None:
+                col.description, col.description_source = cm.description, DescriptionSource.human
         for stale_col in cols.values():
             await session.delete(stale_col)
     await session.flush()
@@ -165,16 +169,24 @@ def column_embedding_text(t: CatalogTable, c: CatalogColumn) -> str:
     return f"column {t.name}.{c.name} ({c.data_type}): {c.description or ''} e.g. {samples}"
 
 
-async def sync_catalog(rt: Runtime, connection_id: uuid.UUID) -> SyncReport:
+async def sync_catalog(
+    rt: Runtime,
+    connection_id: uuid.UUID,
+    *,
+    metas: list[TableMeta] | None = None,
+    draft_descriptions: bool = True,
+) -> SyncReport:
+    """Sync the demo target DB (default) or pre-introspected tables (e.g. BIRD SQLite files)."""
     s = rt.settings
     async with rt.sessions() as session:
         conn = await session.get(Connection, connection_id)
         if conn is None:
             raise ValueError(f"connection {connection_id} not found")
 
-        metas = await introspect_postgres(
-            rt.target_pool, s.target_schema, s.rls_signing_secret.get_secret_value()
-        )
+        if metas is None:
+            metas = await introspect_postgres(
+                rt.target_pool, s.target_schema, s.rls_signing_secret.get_secret_value()
+            )
         tables = await _upsert(session, connection_id, metas)
         n_values = await _rebuild_values(session, tables, metas)
 
@@ -188,8 +200,11 @@ async def sync_catalog(rt: Runtime, connection_id: uuid.UUID) -> SyncReport:
         todo = [
             m
             for m in metas
-            if tables[m.qualified].description is None
-            or any(c.description is None for c in cols_by_table[m.qualified])
+            if draft_descriptions
+            and (
+                tables[m.qualified].description is None
+                or any(c.description is None for c in cols_by_table[m.qualified])
+            )
         ]
         sem = asyncio.Semaphore(4)
         results = await asyncio.gather(*(_describe(rt.llm, s.llm_model_fast, m, sem) for m in todo))

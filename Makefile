@@ -1,4 +1,4 @@
-.PHONY: env up down logs seed smoke types test test-unit e2e e2e-stack lint fmt typecheck check
+.PHONY: env up down logs seed smoke types test test-unit e2e e2e-stack eval-smoke eval-record-smoke lint fmt typecheck check
 
 COMPOSE := docker compose
 BACKEND := cd backend && uv run
@@ -40,6 +40,16 @@ e2e-stack: ## Stack configured for end-to-end tests
 
 e2e: e2e-stack ## Playwright on iPhone 13, Pixel 7, iPad and desktop (with axe checks)
 	cd frontend && pnpm exec playwright test
+
+eval-smoke: ## Eval harness checks + replayed 20-question BIRD smoke (no paid API calls)
+	$(BACKEND) pytest tests/evals -q
+
+eval-record-smoke: ## Record real model responses for the smoke subset (costs a few cents)
+	cd backend && uv run python -m evals.bird_minidev.runner --data evals/bird_minidev/smoke/MINIDEV \
+	  --ablations e_full --evidence with --llm record --recordings evals/recorded/bird_smoke.jsonl \
+	  --run-id smoke-record --yes
+	cd backend && python3 -c "import json; print(json.load(open('evals/results/bird/smoke-record/summary.json'))['runs'][0]['ex'])" \
+	  > evals/recorded/bird_smoke.ex
 
 test: ## All backend tests (integration tests start Postgres via testcontainers)
 	$(BACKEND) pytest --cov=app --cov-report=term-missing

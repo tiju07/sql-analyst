@@ -173,7 +173,7 @@ jobs:
           path: frontend/tests/e2e/artifacts
 
   eval-smoke:
-    # Recorded LLM responses: CI never calls a paid API.
+    # Oracle/compromised-model harness checks and the replayed BIRD smoke: no paid API calls.
     runs-on: ubuntu-latest
     defaults:
       run:

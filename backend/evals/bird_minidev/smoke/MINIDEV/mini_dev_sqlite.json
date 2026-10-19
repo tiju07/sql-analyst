@@ -1,0 +1,162 @@
+[
+ {
+  "question_id": 717,
+  "db_id": "superhero",
+  "question": "Please list all the superpowers of 3-D Man.",
+  "evidence": "3-D Man refers to superhero_name = '3-D Man'; superpowers refers to power_name",
+  "SQL": "SELECT T3.power_name FROM superhero AS T1 INNER JOIN hero_power AS T2 ON T1.id = T2.hero_id INNER JOIN superpower AS T3 ON T2.power_id = T3.id WHERE T1.superhero_name = '3-D Man'",
+  "difficulty": "simple"
+ },
+ {
+  "question_id": 719,
+  "db_id": "superhero",
+  "question": "Among the superheroes with the super power of \"Super Strength\", how many of them have a height of over 200cm?",
+  "evidence": "super power of \"Super Strength\" refers to power_name = 'Super Strength'; a height of over 200cm refers to height_cm > 200",
+  "SQL": "SELECT COUNT(T1.id) FROM superhero AS T1 INNER JOIN hero_power AS T2 ON T1.id = T2.hero_id INNER JOIN superpower AS T3 ON T2.power_id = T3.id WHERE T3.power_name = 'Super Strength' AND T1.height_cm > 200",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 723,
+  "db_id": "superhero",
+  "question": "Among the superheroes with blue eyes, how many of them have the super power of \"Agility\"?",
+  "evidence": "blue eyes refers to colour = 'Blue' and eye_colour_id = colour.id; super power of \"Agility\" refers to power_name = 'Agility'",
+  "SQL": "SELECT COUNT(T1.id) FROM superhero AS T1 INNER JOIN hero_power AS T2 ON T1.id = T2.hero_id INNER JOIN superpower AS T3 ON T2.power_id = T3.id INNER JOIN colour AS T4 ON T1.eye_colour_id = T4.id WHERE T3.power_name = 'Agility' AND T4.colour = 'Blue'",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 724,
+  "db_id": "superhero",
+  "question": "Please list the superhero names of all the superheroes that have blue eyes and blond hair.",
+  "evidence": "blue eyes refers to colour = 'Blue' and eye_colour_id = colour.id; blond hair refers to colour = 'Blond' and hair_colour_id = colour.id; super power of \"Agility\" refers to power_name = 'Agility'",
+  "SQL": "SELECT T1.superhero_name FROM superhero AS T1 INNER JOIN colour AS T2 ON T1.eye_colour_id = T2.id INNER JOIN colour AS T3 ON T1.hair_colour_id = T3.id WHERE T2.colour = 'Blue' AND T3.colour = 'Blond'",
+  "difficulty": "challenging"
+ },
+ {
+  "question_id": 726,
+  "db_id": "superhero",
+  "question": "Rank heroes published by Marvel Comics by their height in descending order.",
+  "evidence": "name refers to superhero_name; the tallest hero refers to MAX(height_cm); published by Marvel Comics refers to publisher_name = 'Marvel Comics'",
+  "SQL": "SELECT superhero_name, height_cm, RANK() OVER (ORDER BY height_cm DESC) AS HeightRank FROM superhero INNER JOIN publisher ON superhero.publisher_id = publisher.id WHERE publisher.publisher_name = 'Marvel Comics'",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 728,
+  "db_id": "superhero",
+  "question": "Rank superheroes from Marvel Comics by their eye color popularity, starting with the most common color.",
+  "evidence": "the superheroes from Marvel Comics refers to publisher_name = 'Marvel Comics'; most common color refers to COUNT(superhero.id) DESC;",
+  "SQL": "SELECT colour.colour AS EyeColor, COUNT(superhero.id) AS Count, RANK() OVER (ORDER BY COUNT(superhero.id) DESC) AS PopularityRank FROM superhero INNER JOIN colour ON superhero.eye_colour_id = colour.id INNER JOIN publisher ON superhero.publisher_id = publisher.id WHERE publisher.publisher_name = 'Marvel Comics' GROUP BY colour.colour",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 730,
+  "db_id": "superhero",
+  "question": "List the superheroes from Marvel Comics who have the super power of 'Super Strength'.",
+  "evidence": "the superheroes from Marvel Comics refers to publisher_name = 'Marvel Comics'; super power of \"Super Strength\" refers to power_name = 'Super Strength';",
+  "SQL": "SELECT superhero_name FROM superhero AS T1 WHERE EXISTS (SELECT 1 FROM hero_power AS T2 INNER JOIN superpower AS T3 ON T2.power_id = T3.id WHERE T3.power_name = 'Super Strength' AND T1.id = T2.hero_id)AND EXISTS (SELECT 1 FROM publisher AS T4 WHERE T4.publisher_name = 'Marvel Comics' AND T1.publisher_id = T4.id)",
+  "difficulty": "challenging"
+ },
+ {
+  "question_id": 732,
+  "db_id": "superhero",
+  "question": "Which publisher published the slowest superhero?",
+  "evidence": "the slowest superhero refers to attribute_name = 'Speed' where MIN(attribute_value); publisher refers to publisher_name",
+  "SQL": "SELECT T2.publisher_name FROM superhero AS T1 INNER JOIN publisher AS T2 ON T1.publisher_id = T2.id INNER JOIN hero_attribute AS T3 ON T1.id = T3.hero_id INNER JOIN attribute AS T4 ON T3.attribute_id = T4.id WHERE T4.attribute_name = 'Speed' ORDER BY T3.attribute_value LIMIT 1",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 733,
+  "db_id": "superhero",
+  "question": "How many gold-eyed superheroes did Marvel Comics publish?",
+  "evidence": "gold-eyed refers to colour = 'Gold' where eye_colour_id = colour.id; superheroes that Marvel Comics published refers to publisher_name = 'Marvel Comics'",
+  "SQL": "SELECT COUNT(T1.id) FROM superhero AS T1 INNER JOIN publisher AS T2 ON T1.publisher_id = T2.id INNER JOIN colour AS T3 ON T1.eye_colour_id = T3.id WHERE T2.publisher_name = 'Marvel Comics' AND T3.colour = 'Gold'",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 736,
+  "db_id": "superhero",
+  "question": "Who is the dumbest superhero?",
+  "evidence": "the dumbest superhero refers to MIN(attribute_value) where attribute_name = 'Intelligence'",
+  "SQL": "SELECT T1.superhero_name FROM superhero AS T1 INNER JOIN hero_attribute AS T2 ON T1.id = T2.hero_id INNER JOIN attribute AS T3 ON T2.attribute_id = T3.id WHERE T3.attribute_name = 'Intelligence' ORDER BY T2.attribute_value LIMIT 1",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 737,
+  "db_id": "superhero",
+  "question": "What is Copycat's race?",
+  "evidence": "Copycat is the superhero_name;",
+  "SQL": "SELECT T2.race FROM superhero AS T1 INNER JOIN race AS T2 ON T1.race_id = T2.id WHERE T1.superhero_name = 'Copycat'",
+  "difficulty": "simple"
+ },
+ {
+  "question_id": 738,
+  "db_id": "superhero",
+  "question": "Which superheroes have a durability attribute value of less than 50?",
+  "evidence": "durability of less than 50 refers to attribute_name = 'Durability' AND attribute_value < 50",
+  "SQL": "SELECT superhero_name FROM superhero AS T1 WHERE EXISTS (SELECT 1 FROM hero_attribute AS T2 INNER JOIN attribute AS T3 ON T2.attribute_id = T3.id WHERE T3.attribute_name = 'Durability' AND T2.attribute_value < 50 AND T1.id = T2.hero_id)",
+  "difficulty": "simple"
+ },
+ {
+  "question_id": 739,
+  "db_id": "superhero",
+  "question": "What are the names of the superheroes with the power of death touch?",
+  "evidence": "name of superheroes refers to refers to superhero_name; the power of death touch refers to power_name = 'Death Touch'",
+  "SQL": "SELECT T1.superhero_name FROM superhero AS T1 INNER JOIN hero_power AS T2 ON T1.id = T2.hero_id INNER JOIN superpower AS T3 ON T2.power_id = T3.id WHERE T3.power_name = 'Death Touch'",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 740,
+  "db_id": "superhero",
+  "question": "How many female superheroes have a strength value of 100?",
+  "evidence": "female refers to gender = 'Female'; strength value of 100 refers to attribute_name = 'Strength' AND attribute_value = 100",
+  "SQL": "SELECT COUNT(T1.id) FROM superhero AS T1 INNER JOIN hero_attribute AS T2 ON T1.id = T2.hero_id INNER JOIN attribute AS T3 ON T2.attribute_id = T3.id INNER JOIN gender AS T4 ON T1.gender_id = T4.id WHERE T3.attribute_name = 'Strength' AND T2.attribute_value = 100 AND T4.gender = 'Female'",
+  "difficulty": "moderate"
+ },
+ {
+  "question_id": 743,
+  "db_id": "superhero",
+  "question": "What is the percentage of superheroes who act in their own self-interest or make decisions based on their own moral code? Indicate how many of the said superheroes were published by Marvel Comics.",
+  "evidence": "published by Marvel Comics refers to publisher_name = 'Marvel Comics'; superheroes who act in their own self-interest or make decisions based on their own moral code refers to alignment = 'Bad'; calculation = MULTIPLY(DIVIDE(SUM(alignment = 'Bad); count(id)), 100)",
+  "SQL": "SELECT (CAST(COUNT(*) AS REAL) * 100 / (SELECT COUNT(*) FROM superhero)), CAST(SUM(CASE WHEN T2.publisher_name = 'Marvel Comics' THEN 1 ELSE 0 END) AS REAL) FROM superhero AS T1 INNER JOIN publisher AS T2 ON T1.publisher_id = T2.id INNER JOIN alignment AS T3 ON T3.id = T1.alignment_id WHERE T3.alignment = 'Bad'",
+  "difficulty": "challenging"
+ },
+ {
+  "question_id": 744,
+  "db_id": "superhero",
+  "question": "Between DC and Marvel Comics, which publisher has published more superheroes? Find the difference in the number of superheroes they have published.",
+  "evidence": "DC refers to publisher_name = 'DC Comics'; Marvel Comics refers to publisher_name = 'Marvel Comics'; calculation = SUBTRACT(SUM(publisher_name = 'Marvel Comics'), SUM(publisher_name = 'DC Comics'))",
+  "SQL": "SELECT SUM(CASE WHEN T2.publisher_name = 'Marvel Comics' THEN 1 ELSE 0 END) - SUM(CASE WHEN T2.publisher_name = 'DC Comics' THEN 1 ELSE 0 END) FROM superhero AS T1 INNER JOIN publisher AS T2 ON T1.publisher_id = T2.id",
+  "difficulty": "challenging"
+ },
+ {
+  "question_id": 745,
+  "db_id": "superhero",
+  "question": "Give the publisher ID of Star Trek.",
+  "evidence": "Star Trek is the publisher_name;",
+  "SQL": "SELECT id FROM publisher WHERE publisher_name = 'Star Trek'",
+  "difficulty": "simple"
+ },
+ {
+  "question_id": 747,
+  "db_id": "superhero",
+  "question": "What is the total number of superheroes without full name?",
+  "evidence": "superheroes without full name refers to full_name IS NULL",
+  "SQL": "SELECT COUNT(id) FROM superhero WHERE full_name IS NULL",
+  "difficulty": "simple"
+ },
+ {
+  "question_id": 750,
+  "db_id": "superhero",
+  "question": "What is the average weight of all female superheroes?",
+  "evidence": "female refers to gender = 'Female'; average weight refers to AVG(weight_kg)",
+  "SQL": "SELECT AVG(T1.weight_kg) FROM superhero AS T1 INNER JOIN gender AS T2 ON T1.gender_id = T2.id WHERE T2.gender = 'Female'",
+  "difficulty": "simple"
+ },
+ {
+  "question_id": 764,
+  "db_id": "superhero",
+  "question": "What are the superpowers of heroes with ID 1?",
+  "evidence": "superpowers refers to power_name; heroes with ID 1 refers to hero_id = 1;",
+  "SQL": "SELECT DISTINCT T2.power_name FROM hero_power AS T1 INNER JOIN superpower AS T2 ON T1.power_id = T2.id WHERE T1.hero_id = 1",
+  "difficulty": "simple"
+ }
+]

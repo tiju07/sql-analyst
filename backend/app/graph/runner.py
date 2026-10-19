@@ -42,7 +42,7 @@ def final_status(values: dict[str, Any], interrupted: bool) -> RunStatus:
 
 
 def _error(code: ErrorCode, message: str, retryable: bool) -> AgentError:
-    return AgentError(code=code, message=message, retryable=retryable)
+    return AgentError(code=code.value, message=message, retryable=retryable)
 
 
 async def stream_run(

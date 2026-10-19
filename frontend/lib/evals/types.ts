@@ -12,13 +12,17 @@ export type AblationRun = {
   by_difficulty: Record<string, number>
 }
 
+export type SafetyRun = { cases: number; passed: number; non_select_executions: number; rows_outside_scope: number }
+
 export type EvalSummary = {
   generated_at: string
   model_sql: string
   model_fast: string
   bird?: { dataset: string; questions: number; runs: AblationRun[] }
   golden?: { questions: number; ex: number; clarify_accuracy: number; cost_per_question_usd: number }
-  safety?: { cases: number; passed: number; non_select_executions: number; rows_outside_scope: number }
+  safety?: SafetyRun
+  /** Same suite with a stand-in model that always attacks: tests the defences alone. */
+  safety_compromised?: SafetyRun
   latency?: { p50_ms: number; p95_ms: number; histogram: { bucket: string; count: number }[] }
   failures?: { audited: number; categories: { category: string; count: number }[] }
   limitations: string[]
