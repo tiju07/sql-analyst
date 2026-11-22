@@ -12,7 +12,10 @@ role, row-level security, a parser-based SQL guard, rate limits and a daily spen
 <sub>Screenshots come from the end-to-end test stack: real Olist data, with the deterministic test
 model writing the SQL and summary.</sub>
 
-**Live demo:** not deployed yet (see [Deploy](#deploy)).
+**Live demo (simulated data):** a static build of the frontend is ready for Cloudflare Pages but
+not deployed yet (see [Static demo](#static-demo)). It plays scripted answers in the browser: the
+result numbers come from running the same queries on the Olist data, while timings, tokens and
+cost are simulated and labelled so. Sign-ups and sign-ins are closed there.
 
 ## What it does
 
@@ -142,9 +145,9 @@ From runs executed in this repository (raw per-question output in `backend/evals
 | Golden Olist set | Not run yet with a model |
 | Safety red team, compromised model (always attacks) | 30 / 30 passed, 0 non-SELECT executed, 0 rows outside the SP scope |
 | Safety red team, real model | Not run yet |
-| Backend tests | 282 passed (guard, RLS, agent graph, API, MCP, eval harness) |
-| End-to-end | 77 passed on iPhone 13, Pixel 7, iPad and 1440 px desktop, with zero serious or critical axe violations |
-| Lighthouse (mobile, `/` and `/evals`) | Performance 96, Accessibility 100, Best Practices 100, SEO 100, CLS 0 |
+| Backend tests (full stack, October 2026) | 282 passed (guard, RLS, agent graph, API, MCP, eval harness) |
+| End-to-end (full stack, October 2026) | 77 passed on iPhone 13, Pixel 7, iPad and 1440 px desktop, with zero serious or critical axe violations |
+| Lighthouse (full-stack build, mobile, `/` and `/evals`) | Performance 96, Accessibility 100, Best Practices 100, SEO 100, CLS 0 |
 
 The BIRD harness is verified with an oracle model on the real databases: it scores exactly 100%
 through BIRD's official scoring code when the answers are right, and drops by exactly the
@@ -183,6 +186,58 @@ Claude Desktop (`claude_desktop_config.json`), through `mcp-remote`:
 
 MCP Inspector: `npx @modelcontextprotocol/inspector`, choose *Streamable HTTP*, enter the URL and
 add the `Authorization` header. Locally the URL is `http://localhost:8080/mcp`.
+
+## Static demo
+
+The public demo is the same frontend built as plain static files, with no backend at all.
+
+- **One switch.** `NEXT_PUBLIC_DEMO=static` (set by the `*:static` scripts) selects static mode.
+  Mode-specific code sits behind one import, `app-mode`, which Turbopack aliases to
+  `frontend/lib/mode/real.tsx` (the HTTP client, sign-in form, account menu) or
+  `frontend/lib/mode/static.tsx` (the demo data layer, the closed sign-in card, a "View as" persona
+  switch). Each build contains only its own mode: the static bundle has no API client, cookies or
+  session code.
+- **Same contract.** Both modes implement `DataApi` (`frontend/lib/mode/types.ts`), typed with the
+  generated OpenAPI schemas. The demo (`frontend/lib/demo/`) answers from fixtures and an
+  in-memory store; chat answers stream the same SSE event shapes on a fixed schedule; writes take
+  about a second, say "Simulated", and reset on reload.
+- **Fixtures.** `frontend/fixtures/`: query results computed from the Olist CSVs by
+  `frontend/scripts/olist_fixtures.py` (aggregates only), the SQL of the backend's deterministic
+  test model and golden set, the catalog from `olist_schema.sql`, and the semantic layer copied
+  from `backend/semantic/metrics.yaml`. Schema tests fail CI if a fixture is malformed or drifts.
+- **Export.** `output: "export"`, `trailingSlash`, unoptimised images; `proxy.ts` is
+  `proxy.real.ts` and only picked up in real mode. Security headers and the CSP for Cloudflare are
+  in `frontend/public/_headers`.
+
+```bash
+cd frontend
+pnpm dev:static        # http://localhost:3150
+pnpm build:static      # writes out/
+pnpm preview:static    # serves out/ on http://127.0.0.1:3151 with public/_headers applied
+pnpm e2e:static        # Playwright: iPhone 13, Pixel 7, iPad, 1440 px desktop, axe, both themes
+pnpm lighthouse:static # Lighthouse CI on / and /app/
+pnpm og:image          # regenerates public/og.png
+```
+
+Measured on this build (November 2026): 73 unit tests and 124 Playwright tests pass (four
+devices, light and dark, zero serious or critical axe violations, no request leaves the origin);
+the landing page loads 192 kB of JavaScript gzipped, walkthrough included. Lighthouse (mobile,
+simulated throttling): Accessibility 100, Best Practices 100, SEO 100, CLS at most 0.02 on `/` and
+`/app/`; Performance 79 on `/` and 75 on `/app/`, below the 90 target (see
+`docs/CHECKPOINTS.md`).
+
+### Deploy the static demo (Cloudflare Pages)
+
+Not done yet; it needs a Cloudflare account. From `frontend/`:
+
+```bash
+pnpm build:static
+pnpm dlx wrangler@4 login                 # once, opens the browser
+pnpm deploy:static                        # wrangler pages deploy out --project-name sql-analyst
+```
+
+Set `SITE_URL` at build time if the final address is not `https://sql-analyst.pages.dev` (it is
+used for canonical URLs, the sitemap and Open Graph tags).
 
 ## Deploy
 

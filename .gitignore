@@ -13,5 +13,6 @@ node_modules/
 .next/
 .DS_Store
 frontend/tests/e2e/artifacts/
+frontend/tests/e2e-static/artifacts/
 frontend/.lighthouseci/
 data/bird/

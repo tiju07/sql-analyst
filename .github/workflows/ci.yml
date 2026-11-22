@@ -49,6 +49,35 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  static-demo:
+    # The public demo: a static export tested on four devices. No backend, Docker or secrets.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:static
+      - run: pnpm exec playwright install --with-deps chromium webkit
+      - run: pnpm e2e:static
+      - run: pnpm lighthouse:static
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: static-demo
+          path: |
+            frontend/tests/e2e-static/artifacts
+            frontend/out
+
   api-types:
     name: API types are up to date
     runs-on: ubuntu-latest
