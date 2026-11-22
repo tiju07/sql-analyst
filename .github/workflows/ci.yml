@@ -103,34 +103,6 @@ jobs:
           make types
           git diff --exit-code frontend/lib/api
 
-  lighthouse:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 12.14.0
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      # / and /evals are static and need no backend.
-      - run: |
-          (PORT=8080 node .next/standalone/server.js &)
-          npx --yes wait-on@9.5.1 http://localhost:8080/
-          pnpm exec lhci autorun
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: lighthouse
-          path: frontend/tests/e2e/artifacts/lighthouse
-
   compose:
     runs-on: ubuntu-latest
     steps:

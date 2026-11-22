@@ -1,5 +1,7 @@
 # SQL Analyst
 
+[![Live demo: sql-analyst.pages.dev](https://img.shields.io/badge/live_demo-sql--analyst.pages.dev-2563eb?style=for-the-badge&logo=cloudflarepages&logoColor=white)](https://sql-analyst.pages.dev)
+
 Ask a business database a question in plain English and get the SQL, the numbers, a chart and a
 short explanation, with every step the agent took on show.
 
@@ -9,11 +11,11 @@ role, row-level security, a parser-based SQL guard, rate limits and a daily spen
 
 ![An answer: pipeline trail, SQL, result table and chart](docs/screenshots/answer-desktop-light.png)
 
-<sub>Screenshots come from the end-to-end test stack: real Olist data, with the deterministic test
-model writing the SQL and summary.</sub>
+<sub>Screenshots come from the live demo at
+[sql-analyst.pages.dev](https://sql-analyst.pages.dev).</sub>
 
-**Live demo (simulated data):** a static build of the frontend is ready for Cloudflare Pages but
-not deployed yet (see [Static demo](#static-demo)). It plays scripted answers in the browser: the
+**[Live demo](https://sql-analyst.pages.dev) (simulated data):** a static build of the frontend on
+Cloudflare Pages (see [Static demo](#static-demo)). It plays scripted answers in the browser: the
 result numbers come from running the same queries on the Olist data, while timings, tokens and
 cost are simulated and labelled so. Sign-ups and sign-ins are closed there.
 
@@ -40,7 +42,7 @@ cost are simulated and labelled so. Sign-ups and sign-ins are closed there.
 <table>
 <tr>
 <td><img src="docs/screenshots/answer-iphone-dark.png" alt="Answer on a phone, dark theme" width="260"></td>
-<td><img src="docs/screenshots/inspector.png" alt="Inspector: per-stage timing, tokens, trace id" width="520"></td>
+<td><img src="docs/screenshots/inspector.png" alt="Inspector: the three SQL candidates and the one chosen" width="520"></td>
 </tr>
 </table>
 
@@ -228,7 +230,7 @@ simulated throttling): Accessibility 100, Best Practices 100, SEO 100, CLS at mo
 
 ### Deploy the static demo (Cloudflare Pages)
 
-Not done yet; it needs a Cloudflare account. From `frontend/`:
+Deployed at [sql-analyst.pages.dev](https://sql-analyst.pages.dev). To redeploy, from `frontend/`:
 
 ```bash
 pnpm build:static

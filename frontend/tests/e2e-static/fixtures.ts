@@ -28,8 +28,10 @@ export const test = base.extend<{ guard: { problems: string[] } }>({
           problems.push(`external request: ${url}`)
       })
       page.on("console", (m) => {
-        // The 404 page is served with status 404 on purpose.
-        if (m.type() === "error" && !/status of 404/.test(m.text())) problems.push(`console error: ${m.text()}`)
+        // The 404 page is served with status 404 on purpose. WebKit doesn't know the viewport's
+        // interactive-widget key (set in app/(product)/layout.tsx) and logs it as an error.
+        if (m.type() === "error" && !/status of 404|"interactive-widget" not recognized/.test(m.text()))
+          problems.push(`console error: ${m.text()}`)
       })
       page.on("pageerror", (e) => problems.push(`page error: ${e.message}`))
       await use({ problems })
