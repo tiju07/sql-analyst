@@ -1,0 +1,75 @@
+/* Base layer: document defaults and a few shared utilities. */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 72px;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg-2);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4 {
+    color: var(--fg);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+  ::selection { background: var(--accent-soft); color: var(--accent-ink); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+  code, kbd, pre, samp { font-family: var(--font-mono); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-track { background: transparent; }
+}
+
+@layer utilities {
+  /* Small mono uppercase label used for section eyebrows and table headers */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  /* Hairline grid: cells draw the lines with outlines so a missing cell leaves a gap, not a slab */
+  .hairline { border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; display: grid; gap: 1px; }
+  .hairline > * { background: var(--bg); outline: 1px solid var(--line); }
+  .container-x { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: var(--gutter); }
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+/* Reduced motion: keep layout, remove movement */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes foundry-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 50%, transparent); }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes foundry-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes foundry-shimmer {
+  to { background-position: -200% 0; }
+}
+@keyframes foundry-marquee {
+  to { transform: translateX(-50%); }
+}

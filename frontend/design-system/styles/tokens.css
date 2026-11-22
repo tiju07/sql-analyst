@@ -1,0 +1,183 @@
+/* Foundry design tokens.
+ *
+ * Language: Linear's precision (near-black canvas, tight type, hairline borders, product-first heroes)
+ * meets Render / Vercel's clarity (white canvas, mono labels, 4 to 8 px corners, one accent).
+ *
+ * Light and dark are both first class. The system preference is the default; set
+ * data-theme="light" or data-theme="dark" on <html> to force one.
+ * Pick a product accent with data-accent="violet|blue|teal|amber|rose|cyan" on <html> (default violet).
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #ffffff;
+  --bg-subtle: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f5f5f6;
+  --surface-3: #ededef;
+  --overlay: rgba(10, 10, 12, 0.5);
+
+  /* Lines */
+  --line: #e4e4e7;
+  --line-strong: #cfcfd4;
+
+  /* Text */
+  --fg: #0d0d0f;
+  --fg-2: #4d4d54;
+  --fg-muted: #6b6b73;
+  --fg-faint: #94949c;
+
+  /* Semantic */
+  --success: #0b7d55;
+  --success-soft: rgba(11, 125, 85, 0.1);
+  --warning: #a8590a;
+  --warning-soft: rgba(168, 89, 10, 0.1);
+  --danger: #c62828;
+  --danger-soft: rgba(198, 40, 40, 0.09);
+  --info: #1d6fd8;
+  --info-soft: rgba(29, 111, 216, 0.1);
+
+  /* Accent: violet (default) */
+  --accent: #6c35f5;
+  --accent-hover: #581ccb;
+  --accent-soft: #efe9fe;
+  --accent-ink: #581ccb;
+  --accent-fg: #ffffff;
+  --accent-ring: rgba(108, 53, 245, 0.35);
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(10, 10, 12, 0.05);
+  --shadow-sm: 0 1px 2px rgba(10, 10, 12, 0.06), 0 1px 3px rgba(10, 10, 12, 0.06);
+  --shadow-pop: 0 8px 30px rgba(10, 10, 12, 0.12), 0 2px 6px rgba(10, 10, 12, 0.06);
+  --shadow-window: 0 30px 80px -20px rgba(10, 10, 12, 0.25), 0 8px 24px -8px rgba(10, 10, 12, 0.12);
+  --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --nav-bg: rgba(255, 255, 255, 0.78);
+  --grid-line: rgba(10, 10, 12, 0.06);
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  /* Type */
+  --font-sans: "Geist Variable", "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 400ms;
+
+  /* Layout */
+  --container: 1200px;
+  --gutter: 32px;
+}
+
+@media (max-width: 640px) {
+  :root { --gutter: 20px; }
+}
+
+/* Dark: Linear-like, near black with a cool tint */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #08090a;
+  --bg-subtle: #0c0d0f;
+  --surface: #0f1012;
+  --surface-2: #16171a;
+  --surface-3: #1d1e22;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --line: #1f2023;
+  --line-strong: #2d2e33;
+  --fg: #f7f8f8;
+  --fg-2: #c2c4c9;
+  --fg-muted: #8a8f98;
+  --fg-faint: #62656c;
+  --success: #3ecf8e;
+  --success-soft: rgba(62, 207, 142, 0.12);
+  --warning: #f5b83d;
+  --warning-soft: rgba(245, 184, 61, 0.12);
+  --danger: #ff6b6b;
+  --danger-soft: rgba(255, 107, 107, 0.12);
+  --info: #5aa2ff;
+  --info-soft: rgba(90, 162, 255, 0.12);
+  --accent: #7c4dff;
+  --accent-hover: #8f66ff;
+  --accent-soft: rgba(124, 77, 255, 0.16);
+  --accent-ink: #a98bff;
+  --accent-fg: #ffffff;
+  --accent-ring: rgba(124, 77, 255, 0.45);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-window: 0 40px 100px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --nav-bg: rgba(8, 9, 10, 0.72);
+  --grid-line: rgba(255, 255, 255, 0.05);
+}
+
+/* Follow the system by default */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #08090a;
+    --bg-subtle: #0c0d0f;
+    --surface: #0f1012;
+    --surface-2: #16171a;
+    --surface-3: #1d1e22;
+    --overlay: rgba(0, 0, 0, 0.6);
+    --line: #1f2023;
+    --line-strong: #2d2e33;
+    --fg: #f7f8f8;
+    --fg-2: #c2c4c9;
+    --fg-muted: #8a8f98;
+    --fg-faint: #62656c;
+    --success: #3ecf8e;
+    --success-soft: rgba(62, 207, 142, 0.12);
+    --warning: #f5b83d;
+    --warning-soft: rgba(245, 184, 61, 0.12);
+    --danger: #ff6b6b;
+    --danger-soft: rgba(255, 107, 107, 0.12);
+    --info: #5aa2ff;
+    --info-soft: rgba(90, 162, 255, 0.12);
+    --accent: #7c4dff;
+    --accent-hover: #8f66ff;
+    --accent-soft: rgba(124, 77, 255, 0.16);
+    --accent-ink: #a98bff;
+    --accent-fg: #ffffff;
+    --accent-ring: rgba(124, 77, 255, 0.45);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --shadow-window: 0 40px 100px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --nav-bg: rgba(8, 9, 10, 0.72);
+    --grid-line: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Product accents. Light first, dark overrides below. Each sets all six accent variables. */
+:root[data-accent="blue"]  { --accent: #2563eb; --accent-hover: #1d4ed8; --accent-soft: #e6eefc; --accent-ink: #1d4ed8; --accent-ring: rgba(37, 99, 235, 0.35); }
+:root[data-accent="teal"]  { --accent: #0f766e; --accent-hover: #0b5f58; --accent-soft: #dff4f1; --accent-ink: #0b5f58; --accent-ring: rgba(15, 118, 110, 0.35); }
+:root[data-accent="amber"] { --accent: #b45309; --accent-hover: #92400e; --accent-soft: #fdf0dc; --accent-ink: #92400e; --accent-ring: rgba(180, 83, 9, 0.35); }
+:root[data-accent="rose"]  { --accent: #e11d48; --accent-hover: #be123c; --accent-soft: #fde8ed; --accent-ink: #be123c; --accent-ring: rgba(225, 29, 72, 0.35); }
+:root[data-accent="cyan"]  { --accent: #0e7490; --accent-hover: #0b5d74; --accent-soft: #dcf2f8; --accent-ink: #0b5d74; --accent-ring: rgba(14, 116, 144, 0.35); }
+
+:root[data-theme="dark"][data-accent="blue"]  { --accent: #3b82f6; --accent-hover: #5b9bff; --accent-soft: rgba(59, 130, 246, 0.16); --accent-ink: #8ab8ff; --accent-ring: rgba(59, 130, 246, 0.45); }
+:root[data-theme="dark"][data-accent="teal"]  { --accent: #2dd4bf; --accent-hover: #5eead4; --accent-soft: rgba(45, 212, 191, 0.14); --accent-ink: #5eead4; --accent-fg: #04201c; --accent-ring: rgba(45, 212, 191, 0.4); }
+:root[data-theme="dark"][data-accent="amber"] { --accent: #fbbf24; --accent-hover: #fcd34d; --accent-soft: rgba(251, 191, 36, 0.14); --accent-ink: #fcd34d; --accent-fg: #251a02; --accent-ring: rgba(251, 191, 36, 0.4); }
+:root[data-theme="dark"][data-accent="rose"]  { --accent: #fb7185; --accent-hover: #fda4af; --accent-soft: rgba(251, 113, 133, 0.15); --accent-ink: #fda4af; --accent-fg: #2a050d; --accent-ring: rgba(251, 113, 133, 0.4); }
+:root[data-theme="dark"][data-accent="cyan"]  { --accent: #22d3ee; --accent-hover: #67e8f9; --accent-soft: rgba(34, 211, 238, 0.14); --accent-ink: #67e8f9; --accent-fg: #03212a; --accent-ring: rgba(34, 211, 238, 0.4); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-accent="blue"]  { --accent: #3b82f6; --accent-hover: #5b9bff; --accent-soft: rgba(59, 130, 246, 0.16); --accent-ink: #8ab8ff; --accent-ring: rgba(59, 130, 246, 0.45); }
+  :root:not([data-theme="light"])[data-accent="teal"]  { --accent: #2dd4bf; --accent-hover: #5eead4; --accent-soft: rgba(45, 212, 191, 0.14); --accent-ink: #5eead4; --accent-fg: #04201c; --accent-ring: rgba(45, 212, 191, 0.4); }
+  :root:not([data-theme="light"])[data-accent="amber"] { --accent: #fbbf24; --accent-hover: #fcd34d; --accent-soft: rgba(251, 191, 36, 0.14); --accent-ink: #fcd34d; --accent-fg: #251a02; --accent-ring: rgba(251, 191, 36, 0.4); }
+  :root:not([data-theme="light"])[data-accent="rose"]  { --accent: #fb7185; --accent-hover: #fda4af; --accent-soft: rgba(251, 113, 133, 0.15); --accent-ink: #fda4af; --accent-fg: #2a050d; --accent-ring: rgba(251, 113, 133, 0.4); }
+  :root:not([data-theme="light"])[data-accent="cyan"]  { --accent: #22d3ee; --accent-hover: #67e8f9; --accent-soft: rgba(34, 211, 238, 0.14); --accent-ink: #67e8f9; --accent-fg: #03212a; --accent-ring: rgba(34, 211, 238, 0.4); }
+}
