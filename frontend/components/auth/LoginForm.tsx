@@ -59,10 +59,10 @@ export function LoginForm() {
   return (
     <div className="space-y-10">
       <section aria-labelledby="demo-heading">
-        <h2 id="demo-heading" className="text-lg font-semibold tracking-tight">
+        <h2 id="demo-heading" className="text-lg font-medium tracking-tight">
           Try it as one of three people
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="text-fg-muted mt-1 text-sm">
           One click, no account. Each sees the same database through different permissions.
         </p>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -80,12 +80,12 @@ export function LoginForm() {
                   type="button"
                   onClick={() => demo(p.key)}
                   disabled={busy !== null}
-                  className="bg-card hover:border-primary focus-visible:border-primary flex h-full w-full flex-col items-start rounded-lg border p-4 text-left transition-colors disabled:opacity-60"
+                  className="bg-surface hover:border-accent focus-visible:border-accent flex h-full w-full flex-col items-start rounded-lg border p-4 text-left transition-colors disabled:opacity-60"
                 >
-                  <Icon aria-hidden className="text-primary size-5" />
+                  <Icon aria-hidden className="text-accent-ink size-5" />
                   <span className="mt-3 font-medium">{p.display_name}</span>
-                  <span className="text-muted-foreground mt-1 text-sm">{p.blurb}</span>
-                  <span className="text-primary mt-auto pt-3 text-sm font-medium">
+                  <span className="text-fg-muted mt-1 text-sm">{p.blurb}</span>
+                  <span className="text-accent-ink mt-auto pt-3 text-sm font-medium">
                     {busy === p.key ? "Signing in…" : `Continue as ${p.display_name.split(" ")[0]}`}
                   </span>
                 </button>
@@ -93,7 +93,7 @@ export function LoginForm() {
             )
           })}
           {personas.data?.length === 0 && (
-            <li className="text-muted-foreground text-sm">Demo sign-in is turned off on this server.</li>
+            <li className="text-fg-muted text-sm">Demo sign-in is turned off on this server.</li>
           )}
         </ul>
       </section>
@@ -114,7 +114,7 @@ export function LoginForm() {
               {...form.register("email")}
             />
             {form.formState.errors.email && (
-              <p id="email-error" className="text-destructive text-sm">
+              <p id="email-error" className="text-danger text-sm">
                 {form.formState.errors.email.message}
               </p>
             )}
@@ -130,7 +130,7 @@ export function LoginForm() {
               {...form.register("password")}
             />
             {form.formState.errors.password && (
-              <p id="password-error" className="text-destructive text-sm">
+              <p id="password-error" className="text-danger text-sm">
                 {form.formState.errors.password.message}
               </p>
             )}
@@ -141,7 +141,7 @@ export function LoginForm() {
         </form>
       </section>
       {error && (
-        <p role="alert" className="text-destructive text-sm">
+        <p role="alert" className="text-danger text-sm">
           {error}
         </p>
       )}

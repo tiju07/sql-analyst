@@ -2,11 +2,11 @@
 
 import { yaml as yamlLang } from "@codemirror/lang-yaml"
 import CodeMirror from "@uiw/react-codemirror"
-import { useTheme } from "next-themes"
+import { useResolvedTheme } from "@/lib/theme"
 
 /** Loaded lazily: CodeMirror only ships to admins who open the editor. */
 export default function MetricsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { resolvedTheme } = useTheme()
+  const resolvedTheme = useResolvedTheme()
   return (
     <CodeMirror
       value={value}

@@ -55,9 +55,9 @@ export function EditableDescription({
   }
   return (
     <div className="group/desc flex items-start gap-1">
-      <p className={value ? "" : "text-muted-foreground italic"}>
+      <p className={value ? "" : "text-fg-muted italic"}>
         {value ?? "No description yet."}
-        {source === "llm" && <span className="text-muted-foreground ml-1 text-xs not-italic">(drafted by AI)</span>}
+        {source === "llm" && <span className="text-fg-muted ml-1 text-xs not-italic">(drafted by AI)</span>}
       </p>
       {canEdit && (
         <Button

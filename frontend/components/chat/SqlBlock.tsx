@@ -1,7 +1,7 @@
 "use client"
 
 import { Check, ChevronDown, Copy } from "lucide-react"
-import { useTheme } from "next-themes"
+import { useResolvedTheme } from "@/lib/theme"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import type { ThemedToken } from "shiki/core"
@@ -12,7 +12,7 @@ import { sqlTokens } from "@/lib/highlight"
 
 /** Highlighted SQL as React text nodes: model output is never injected as HTML. */
 export function SqlCode({ sql }: { sql: string }) {
-  const { resolvedTheme } = useTheme()
+  const resolvedTheme = useResolvedTheme()
   const [tokens, setTokens] = useState<ThemedToken[][] | null>(null)
   useEffect(() => {
     let live = true
@@ -27,7 +27,7 @@ export function SqlCode({ sql }: { sql: string }) {
     <pre
       tabIndex={0}
       aria-label="SQL"
-      className="bg-muted overflow-x-auto rounded-md p-3 font-mono text-[13px] leading-relaxed"
+      className="border-line bg-bg-subtle text-fg-2 overflow-x-auto rounded-md border p-3 font-mono text-[13px] leading-relaxed"
     >
       <code>
         {tokens

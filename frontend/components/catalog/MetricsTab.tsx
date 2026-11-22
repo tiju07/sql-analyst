@@ -9,8 +9,12 @@ import { parse } from "yaml"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { api, ApiError, unwrap } from "@/lib/api/client"
+import { mode } from "app-mode"
+
+import { Callout } from "@/design-system"
+import { ApiError } from "@/lib/api/errors"
 import { keys } from "@/lib/api/queries"
+import { saved } from "@/lib/notify"
 
 const MetricsEditor = dynamic(() => import("@/components/catalog/MetricsEditor"), {
   ssr: false,
@@ -21,7 +25,7 @@ export function MetricsTab({ isAdmin }: { isAdmin: boolean }) {
   const qc = useQueryClient()
   const metrics = useQuery({
     queryKey: keys.metrics,
-    queryFn: async () => unwrap(await api.GET("/api/semantic/metrics")),
+    queryFn: () => mode.data.metrics(),
   })
   const [draft, setDraft] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
@@ -35,14 +39,12 @@ export function MetricsTab({ isAdmin }: { isAdmin: boolean }) {
     }
   }, [draft])
   const save = useMutation({
-    mutationFn: async (yaml: string) => unwrap(await api.PUT("/api/semantic/metrics", { body: { yaml } })),
+    mutationFn: (yaml: string) => mode.data.saveMetrics({ yaml }),
     onSuccess: (data) => {
       qc.setQueryData(keys.metrics, data)
       setEditing(false)
       setDraft(null)
-      toast.success("Metrics saved", {
-        description: `${data.layer.metrics.length} metrics are live for new questions.`,
-      })
+      saved("Metrics saved", `${data.layer.metrics.length} metrics are live for new questions.`)
     },
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Save failed"),
   })
@@ -50,24 +52,23 @@ export function MetricsTab({ isAdmin }: { isAdmin: boolean }) {
   if (metrics.isPending) return <Skeleton className="h-64 w-full" />
   if (metrics.isError)
     return (
-      <p className="text-sm">
-        Metrics didn&apos;t load.{" "}
-        <button className="text-primary underline" onClick={() => metrics.refetch()}>
-          Retry
-        </button>
-      </p>
+      <Callout tone="danger" title="Metrics did not load">
+        <Button variant="outline" size="sm" className="mt-2" onClick={() => metrics.refetch()}>
+          Try again
+        </Button>
+      </Callout>
     )
 
   if (editing) {
     const value = draft ?? metrics.data.yaml
     return (
       <div className="space-y-3">
-        <p className="text-muted-foreground text-sm">
+        <p className="text-fg-muted text-sm">
           Edits are validated (YAML syntax, metric names, SQL expressions) before they go live.
         </p>
         <MetricsEditor value={value} onChange={setDraft} />
         {syntaxError && (
-          <p role="alert" className="text-destructive text-sm">
+          <p role="alert" className="text-danger text-sm">
             YAML error: {syntaxError}
           </p>
         )}
@@ -76,7 +77,7 @@ export function MetricsTab({ isAdmin }: { isAdmin: boolean }) {
             disabled={Boolean(syntaxError) || save.isPending || draft === null}
             onClick={() => save.mutate(value)}
           >
-            {save.isPending ? "Saving…" : "Save metrics"}
+            {save.isPending ? "Saving" : "Save metrics"}
           </Button>
           <Button
             variant="ghost"
@@ -101,7 +102,7 @@ export function MetricsTab({ isAdmin }: { isAdmin: boolean }) {
           Edit definitions
         </Button>
       )}
-      <ul className="divide-y rounded-lg border">
+      <ul className="divide-line border-line bg-surface divide-y overflow-hidden rounded-lg border">
         {layer.metrics.map((m) => (
           <li key={m.name} className="space-y-1.5 p-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -109,9 +110,11 @@ export function MetricsTab({ isAdmin }: { isAdmin: boolean }) {
               <Badge variant="secondary">{m.semantic_type}</Badge>
             </div>
             <p className="text-sm">{m.description}</p>
-            <code className="bg-muted block overflow-x-auto rounded px-2 py-1 font-mono text-xs">{m.sql_expr}</code>
+            <code className="border-line bg-bg-subtle text-fg-2 block overflow-x-auto rounded-sm border px-2 py-1 font-mono text-xs">
+              {m.sql_expr}
+            </code>
             {(m.synonyms ?? []).length > 0 && (
-              <p className="text-muted-foreground text-xs">Also matches: {(m.synonyms ?? []).join(", ")}</p>
+              <p className="text-fg-muted text-xs">Also matches: {(m.synonyms ?? []).join(", ")}</p>
             )}
           </li>
         ))}
@@ -119,7 +122,7 @@ export function MetricsTab({ isAdmin }: { isAdmin: boolean }) {
       {notes.length > 0 && (
         <section>
           <h3 className="text-sm font-medium">Notes the agent follows</h3>
-          <ul className="text-muted-foreground mt-2 list-disc space-y-1 pl-5 text-sm">
+          <ul className="text-fg-muted mt-2 list-disc space-y-1 pl-5 text-sm">
             {notes.map((n) => (
               <li key={n}>{n}</li>
             ))}

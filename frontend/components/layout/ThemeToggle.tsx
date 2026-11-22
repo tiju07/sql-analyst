@@ -1,37 +1,17 @@
 "use client"
 
-import { Monitor, Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
+import { Moon, Sun } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useMounted } from "@/lib/hooks/useClientFlags"
+import { IconButton } from "@/design-system"
+import { setTheme, useResolvedTheme } from "@/lib/theme"
 
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
-  const { theme, setTheme, resolvedTheme } = useTheme()
-  const mounted = useMounted()
-  const Icon = !mounted ? Monitor : resolvedTheme === "dark" ? Moon : Sun
+/** Foundry theme toggle wired to the shared theme store, so every themed component follows it. */
+export function ThemeToggle({ className }: { className?: string }) {
+  const theme = useResolvedTheme()
+  const next = theme === "dark" ? "light" : "dark"
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={compact ? "icon-sm" : "sm"} aria-label="Theme">
-          <Icon aria-hidden />
-          {!compact && "Theme"}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuRadioGroup value={mounted ? theme : "system"} onValueChange={setTheme}>
-          <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <IconButton label={`Switch to ${next} theme`} className={className} onClick={() => setTheme(next)}>
+      {theme === "dark" ? <Sun className="size-4" aria-hidden /> : <Moon className="size-4" aria-hidden />}
+    </IconButton>
   )
 }

@@ -1,91 +1,141 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Check, X } from "lucide-react"
+import { mode } from "app-mode"
+import { BadgeCheck, Check, X } from "lucide-react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 import { SqlCode } from "@/components/chat/SqlBlock"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { api, unwrap, type Schemas } from "@/lib/api/client"
+import { Callout, EmptyState, PageHeader, StatusPill } from "@/design-system"
+import type { Schemas } from "@/lib/api/errors"
 import { keys, useMe } from "@/lib/api/queries"
+import { saved } from "@/lib/notify"
 
 type Verified = Schemas["VerifiedOut"]
+type Status = Verified["status"]
 
-function List({ status, isAdmin }: { status: "proposed" | "approved"; isAdmin: boolean }) {
+const date = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+
+function List({ status, isAdmin }: { status: Status; isAdmin: boolean }) {
   const qc = useQueryClient()
-  const list = useQuery({
-    queryKey: keys.verified(status),
-    queryFn: async () => unwrap(await api.GET("/api/verified", { params: { query: { status } } })),
-  })
+  const [rejecting, setRejecting] = useState<Verified | null>(null)
+  const list = useQuery({ queryKey: keys.verified(status), queryFn: () => mode.data.verified(status) })
+  const done = () => void qc.invalidateQueries({ queryKey: ["verified"] })
   const approve = useMutation({
-    mutationFn: async (id: string) =>
-      unwrap(await api.POST("/api/verified/{verified_id}/approve", { params: { path: { verified_id: id } } })),
+    mutationFn: (id: string) => mode.data.approveVerified(id),
     onSuccess: () => {
-      toast.success("Approved", { description: "It will guide answers to similar questions." })
-      void qc.invalidateQueries({ queryKey: ["verified"] })
+      saved("Approved", "It will guide answers to similar questions.")
+      done()
     },
-    onError: () => toast.error("Approve failed"),
+    onError: (e) => toast.error("Approve failed", { description: e.message }),
   })
   const reject = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.DELETE("/api/verified/{verified_id}", { params: { path: { verified_id: id } } })
-      if (!res.response.ok) throw new Error("reject failed")
-    },
+    mutationFn: (id: string) => mode.data.rejectVerified(id),
     onSuccess: () => {
-      toast.success("Rejected and removed")
-      void qc.invalidateQueries({ queryKey: ["verified"] })
+      saved("Rejected and removed")
+      done()
     },
-    onError: () => toast.error("Reject failed"),
+    onError: (e) => toast.error("Reject failed", { description: e.message }),
   })
 
-  if (list.isPending) return <Skeleton className="h-48 w-full" />
+  if (list.isPending)
+    return (
+      <div className="grid gap-4">
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    )
   if (list.isError)
     return (
-      <p className="text-sm">
-        The list didn&apos;t load.{" "}
-        <button className="text-primary underline" onClick={() => list.refetch()}>
-          Retry
-        </button>
-      </p>
+      <Callout tone="danger" title="The list did not load">
+        <Button variant="outline" size="sm" className="mt-2" onClick={() => list.refetch()}>
+          Try again
+        </Button>
+      </Callout>
     )
   if (!list.data.length)
     return (
-      <p className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-        {status === "proposed"
-          ? "Nothing waiting for review. Use “Propose as verified” under a good answer to add one."
-          : "No approved queries yet. Approved ones become examples for similar questions."}
-      </p>
+      <EmptyState
+        icon={<BadgeCheck className="size-5" />}
+        title={status === "proposed" ? "Nothing waiting for review" : "No approved queries yet"}
+        description={
+          status === "proposed"
+            ? "Use Propose as verified under a good answer to add one."
+            : "Approved queries become examples for similar questions."
+        }
+      />
     )
   return (
-    <ul className="space-y-4">
-      {list.data.map((v: Verified) => (
-        <li key={v.id} className="bg-card space-y-3 rounded-lg border p-4">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <p className="font-medium">{v.question}</p>
-            {isAdmin && status === "proposed" && (
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => approve.mutate(v.id)} disabled={approve.isPending}>
-                  <Check aria-hidden />
-                  Approve
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => reject.mutate(v.id)} disabled={reject.isPending}>
-                  <X aria-hidden />
-                  Reject
-                </Button>
+    <>
+      <ul className="grid gap-4">
+        {list.data.map((v) => {
+          const busy =
+            (approve.isPending && approve.variables === v.id) || (reject.isPending && reject.variables === v.id)
+          return (
+            <li key={v.id} className="border-line bg-surface grid gap-3 rounded-lg border p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="grid min-w-0 justify-items-start gap-1.5">
+                  <p className="text-fg font-medium text-pretty">{v.question}</p>
+                  <StatusPill
+                    status={v.status === "approved" ? "Approved" : "Waiting for review"}
+                    tone={v.status === "approved" ? "success" : "warning"}
+                  />
+                </div>
+                {isAdmin && status === "proposed" && (
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => approve.mutate(v.id)} disabled={busy}>
+                      <Check aria-hidden />
+                      {approve.isPending && approve.variables === v.id ? "Approving" : "Approve"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setRejecting(v)} disabled={busy}>
+                      <X aria-hidden />
+                      Reject
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <SqlCode sql={v.sql} />
-          <p className="text-muted-foreground text-xs">
-            Proposed by {v.proposed_by ?? "a deleted user"} on{" "}
-            {new Date(v.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
-            {v.approved_by && `, approved by ${v.approved_by}`}
-          </p>
-        </li>
-      ))}
-    </ul>
+              <SqlCode sql={v.sql} />
+              <p className="text-fg-muted text-xs">
+                Proposed by {v.proposed_by ?? "a deleted user"} on {date(v.created_at)}
+                {v.approved_by && `, approved by ${v.approved_by}`}
+                {mode.isDemo ? ". Names and dates are simulated." : null}
+              </p>
+            </li>
+          )
+        })}
+      </ul>
+      <AlertDialog open={rejecting !== null} onOpenChange={(o) => !o && setRejecting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject this query?</AlertDialogTitle>
+            <AlertDialogDescription>
+              &ldquo;{rejecting?.question}&rdquo; will be removed from the review queue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={() => rejecting && reject.mutate(rejecting.id)}>
+              Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 
@@ -94,21 +144,20 @@ export function VerifiedView() {
   const isAdmin = me.data?.role === "admin"
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="text-2xl font-semibold tracking-tight">Verified queries</h1>
-        <p className="text-muted-foreground mt-1 max-w-prose text-sm">
-          Answers people marked as correct. {isAdmin ? "Approve the good ones; " : "Admins approve them; "}approved
-          queries are shown to the agent as worked examples when a similar question comes in.
-        </p>
-        <Tabs defaultValue="proposed" className="mt-6">
+      <div className="mx-auto grid max-w-4xl gap-6 px-4 py-6 sm:px-6 sm:py-8">
+        <PageHeader
+          title="Verified queries"
+          description={`Answers people marked as correct. ${isAdmin ? "Approve the good ones; " : "Admins approve them; "}approved queries become worked examples for similar questions.`}
+        />
+        <Tabs defaultValue="proposed">
           <TabsList>
             <TabsTrigger value="proposed">Waiting for review</TabsTrigger>
             <TabsTrigger value="approved">Approved</TabsTrigger>
           </TabsList>
-          <TabsContent value="proposed" className="mt-4">
+          <TabsContent value="proposed">
             <List status="proposed" isAdmin={isAdmin} />
           </TabsContent>
-          <TabsContent value="approved" className="mt-4">
+          <TabsContent value="approved">
             <List status="approved" isAdmin={isAdmin} />
           </TabsContent>
         </Tabs>

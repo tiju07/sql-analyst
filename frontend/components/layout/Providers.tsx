@@ -4,12 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useState, type ReactNode } from "react"
 
 import { Notices } from "@/components/layout/Notices"
-import { ThemeProvider } from "@/components/layout/ThemeProvider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { ApiError } from "@/lib/api/client"
+import { ApiError } from "@/lib/api/errors"
 
-export function Providers({ children, nonce }: { children: ReactNode; nonce?: string }) {
+export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
     () =>
       new QueryClient({
@@ -24,14 +23,12 @@ export function Providers({ children, nonce }: { children: ReactNode; nonce?: st
       }),
   )
   return (
-    <ThemeProvider nonce={nonce}>
-      <QueryClientProvider client={client}>
-        <TooltipProvider delayDuration={300}>
-          <Notices />
-          {children}
-          <Toaster position="bottom-right" closeButton />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={client}>
+      <TooltipProvider delayDuration={300}>
+        <Notices />
+        {children}
+        <Toaster position="bottom-right" closeButton />
+      </TooltipProvider>
+    </QueryClientProvider>
   )
 }

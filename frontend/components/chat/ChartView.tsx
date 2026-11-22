@@ -21,8 +21,8 @@ function Kpi({ spec, data }: { spec: ChartSpec; data: RowsData }) {
   const value = yi >= 0 ? data.rows[0]?.[yi] : undefined
   return (
     <figure className="py-2">
-      <figcaption className="text-muted-foreground text-sm">{spec.title}</figcaption>
-      <p className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">
+      <figcaption className="text-fg-muted text-sm">{spec.title}</figcaption>
+      <p className="mt-1 text-4xl font-medium tracking-tight sm:text-5xl">
         {formatValue(value, spec.y_format as ValueFormat | null)}
       </p>
     </figure>

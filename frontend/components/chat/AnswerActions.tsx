@@ -17,7 +17,9 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { api, unwrap } from "@/lib/api/client"
+import { mode } from "app-mode"
+
+import { saved } from "@/lib/notify"
 
 export function AnswerActions({
   runId,
@@ -39,20 +41,18 @@ export function AnswerActions({
   const [proposedQuestion, setProposedQuestion] = useState(question)
 
   const feedback = useMutation({
-    mutationFn: async (body: { rating: 1 | -1; comment?: string }) =>
-      unwrap(await api.POST("/api/feedback", { body: { run_id: runId, ...body } })),
+    mutationFn: (body: { rating: 1 | -1; comment?: string }) => mode.data.feedback({ run_id: runId, ...body }),
     onSuccess: (data) => {
       setRating(data.rating as 1 | -1)
-      toast.success("Thanks, feedback saved")
+      saved("Thanks, feedback saved")
     },
     onError: () => toast.error("Feedback wasn't saved. Try again."),
   })
   const propose = useMutation({
-    mutationFn: async () =>
-      unwrap(await api.POST("/api/verified", { body: { run_id: runId, question: proposedQuestion } })),
+    mutationFn: () => mode.data.proposeVerified({ run_id: runId, question: proposedQuestion }),
     onSuccess: () => {
       setProposeOpen(false)
-      toast.success("Proposed as a verified query", { description: "An admin reviews it before it's used." })
+      saved("Proposed as a verified query", "An admin reviews it before it is used.")
     },
     onError: (e) => toast.error(e.message),
   })
@@ -72,7 +72,7 @@ export function AnswerActions({
             aria-label="Good answer"
             aria-pressed={rating === 1}
             onClick={() => rate(1)}
-            className={rating === 1 ? "text-primary" : undefined}
+            className={rating === 1 ? "text-accent-ink" : undefined}
           >
             <ThumbsUp aria-hidden />
           </Button>
@@ -87,7 +87,7 @@ export function AnswerActions({
             aria-label="Bad answer"
             aria-pressed={rating === -1}
             onClick={() => rate(-1)}
-            className={rating === -1 ? "text-destructive" : undefined}
+            className={rating === -1 ? "text-danger" : undefined}
           >
             <ThumbsDown aria-hidden />
           </Button>

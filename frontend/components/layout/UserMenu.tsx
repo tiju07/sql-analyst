@@ -43,7 +43,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         {me.data && (
           <DropdownMenuLabel className="font-normal">
             <p className="font-medium">{me.data.display_name}</p>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-fg-muted text-xs">
               {ROLE_LABEL[me.data.role]}, {scopeLabel(me.data.allowed_states).toLowerCase()}
             </p>
           </DropdownMenuLabel>

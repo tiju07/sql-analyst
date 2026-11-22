@@ -46,28 +46,19 @@ export function Notices() {
       </div>
       <div className="fixed inset-x-0 top-0 z-50 flex flex-col">
         {!online && (
-          <p
-            role="status"
-            className="bg-foreground text-background flex items-center justify-center gap-2 px-4 py-2 text-sm"
-          >
+          <p role="status" className="bg-fg text-bg flex items-center justify-center gap-2 px-4 py-2 text-sm">
             <CloudOff aria-hidden className="size-4" />
             You are offline. Answers will resume when the connection is back.
           </p>
         )}
         {banner?.kind === "rate_limited" && (
-          <p
-            role="status"
-            className="bg-warn flex items-center justify-center gap-2 px-4 py-2 text-sm text-white dark:text-black"
-          >
+          <p role="status" className="bg-warning flex items-center justify-center gap-2 px-4 py-2 text-sm text-white">
             <Hourglass aria-hidden className="size-4" />
             You are asking faster than the demo allows. Try again in <Countdown until={banner.until} />.
           </p>
         )}
         {banner?.kind === "budget" && (
-          <p
-            role="status"
-            className="bg-destructive flex items-center justify-center gap-2 px-4 py-2 text-sm text-white dark:text-black"
-          >
+          <p role="status" className="bg-danger flex items-center justify-center gap-2 px-4 py-2 text-sm text-white">
             <AlertTriangle aria-hidden className="size-4" />
             {banner.message}
           </p>

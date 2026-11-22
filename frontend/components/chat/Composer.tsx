@@ -49,7 +49,7 @@ export const Composer = forwardRef<
         e.preventDefault()
         send()
       }}
-      className="bg-card focus-within:border-primary rounded-xl border p-2 shadow-[var(--shadow-raised)] transition-colors"
+      className="bg-surface focus-within:border-accent rounded-xl border p-2 shadow-xs transition-colors"
     >
       <label htmlFor="composer" className="sr-only">
         Ask a question about the data
@@ -68,16 +68,13 @@ export const Composer = forwardRef<
         }}
         placeholder="Ask about orders, revenue, deliveries, reviews…"
         aria-describedby="composer-hint composer-count"
-        className="placeholder:text-muted-foreground block max-h-[220px] w-full resize-none bg-transparent px-2 py-1.5 text-base outline-none sm:text-sm"
+        className="placeholder:text-fg-muted block max-h-[220px] w-full resize-none bg-transparent px-2 py-1.5 text-base outline-none sm:text-sm"
       />
       <div className="flex items-center justify-between gap-2 px-1 pt-1">
-        <p id="composer-hint" className="text-muted-foreground hidden text-xs sm:block">
+        <p id="composer-hint" className="text-fg-muted hidden text-xs sm:block">
           Enter to send, Shift+Enter for a new line
         </p>
-        <p
-          id="composer-count"
-          className={cn("tabular ml-auto text-xs", over ? "text-destructive" : "text-muted-foreground")}
-        >
+        <p id="composer-count" className={cn("tabular ml-auto text-xs", over ? "text-danger" : "text-fg-muted")}>
           {value.length > QUESTION_MAX * 0.8 || over ? `${value.length}/${QUESTION_MAX}` : ""}
         </p>
         {streaming ? (

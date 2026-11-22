@@ -11,7 +11,7 @@ for (const scheme of ["light", "dark"] as const) {
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(
         /Plain-English questions\.\s*SQL you can check\./,
       )
-      await expect(page.getByText("These five states account for")).toBeVisible()
+      await expect(page.getByRole("heading", { level: 1, name: /Ask your database in plain English/ })).toBeVisible()
       await expectNoHorizontalScroll(page)
       await expectAccessible(page)
       await shot(page, info, `landing-${scheme}`)
@@ -19,7 +19,7 @@ for (const scheme of ["light", "dark"] as const) {
 
     test("evals page", async ({ page }, info) => {
       await page.goto("/evals")
-      await expect(page.getByRole("heading", { name: "Evaluation results" })).toBeVisible()
+      await expect(page.getByRole("heading", { name: "How SQL Analyst is measured" })).toBeVisible()
       await expectNoHorizontalScroll(page)
       await expectAccessible(page)
       await shot(page, info, `evals-${scheme}`)
@@ -46,5 +46,5 @@ test("signed-out visit to the app returns to it after login", async ({ page }) =
 test("unknown pages show the custom 404", async ({ page }) => {
   const res = await page.goto("/definitely-not-here")
   expect(res?.status()).toBe(404)
-  await expect(page.getByRole("heading", { name: "This page doesn't exist" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "This page does not exist" })).toBeVisible()
 })

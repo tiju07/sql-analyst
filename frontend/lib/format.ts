@@ -40,7 +40,7 @@ export function formatDate(value: string): string {
 }
 
 export function formatValue(value: unknown, format?: ValueFormat | null, opts?: { compact?: boolean }): string {
-  if (value === null || value === undefined) return "—"
+  if (value === null || value === undefined) return "None"
   if (typeof value === "boolean") return value ? "Yes" : "No"
   if (typeof value === "number") {
     switch (format) {

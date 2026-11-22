@@ -23,18 +23,18 @@ export function ClarifyCard({
   const id = useId()
   if (answered) {
     return (
-      <p className="text-muted-foreground flex items-start gap-2 text-sm">
+      <p className="text-fg-muted flex items-start gap-2 text-sm">
         <MessageCircleQuestion aria-hidden className="mt-0.5 size-4 shrink-0" />
         <span>
-          {question} <span className="text-foreground font-medium">{answered}</span>
+          {question} <span className="text-fg font-medium">{answered}</span>
         </span>
       </p>
     )
   }
   return (
-    <section aria-labelledby={id} className="border-primary/40 bg-accent-wash/50 rounded-lg border p-4">
+    <section aria-labelledby={id} className="border-accent/40 bg-accent-soft/50 rounded-lg border p-4">
       <h3 id={id} className="flex items-start gap-2 font-medium">
-        <MessageCircleQuestion aria-hidden className="text-primary mt-0.5 size-4 shrink-0" />
+        <MessageCircleQuestion aria-hidden className="text-accent-ink mt-0.5 size-4 shrink-0" />
         {question}
       </h3>
       <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Suggested answers">

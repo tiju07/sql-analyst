@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next"
 
-import { SITE_URL } from "@/lib/site"
+import { IS_STATIC, SITE_URL } from "@/lib/site"
+
+export const dynamic = "force-static"
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    { url: `${SITE_URL}/`, changeFrequency: "monthly", priority: 1 },
-    { url: `${SITE_URL}/evals`, changeFrequency: "monthly", priority: 0.8 },
-  ]
+  const pages = IS_STATIC ? ["/", "/evals/", "/app/", "/app/catalog/", "/app/verified/"] : ["/", "/evals"]
+  return pages.map((p) => ({ url: `${SITE_URL}${p}`, changeFrequency: "monthly", priority: p === "/" ? 1 : 0.7 }))
 }

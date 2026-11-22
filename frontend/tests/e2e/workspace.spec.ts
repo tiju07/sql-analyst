@@ -12,7 +12,7 @@ test.describe("analyst", () => {
     test(`ask, stream, and get SQL, table, chart and summary (${scheme})`, async ({ page }, info) => {
       await page.emulateMedia({ colorScheme: scheme })
       await page.goto("/app")
-      await expect(page.getByRole("heading", { name: "Ask the Olist marketplace anything" })).toBeVisible()
+      await expect(page.getByRole("heading", { name: "Ask the Olist marketplace" })).toBeVisible()
       await expect(page.getByText("order_items")).toBeVisible()
       await expectAccessible(page)
       await shot(page, info, `app-empty-${scheme}`)

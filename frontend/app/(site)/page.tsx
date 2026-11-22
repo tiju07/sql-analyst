@@ -1,185 +1,226 @@
-import Link from "next/link"
+import {
+  BadgeCheck,
+  Braces,
+  Database,
+  FileSearch,
+  GitBranch,
+  LineChart,
+  ListChecks,
+  MessageCircleQuestion,
+  ShieldCheck,
+  Table2,
+  Wrench,
+} from "lucide-react"
 
-import { HeroAnswer } from "@/components/marketing/HeroAnswer"
-import { SiteFooter } from "@/components/marketing/SiteFooter"
-import { SiteHeader } from "@/components/marketing/SiteHeader"
-import { loadEvalSummary } from "@/lib/evals/load"
-import { formatValue } from "@/lib/format"
-import { REPO_URL, TAGLINE } from "@/lib/site"
-
-const STEPS = [
-  [
-    "Find the relevant schema",
-    "Vector and keyword search over table and column descriptions picks the few tables a question needs, plus the joins between them and any values it names.",
-  ],
-  [
-    "Ask when it's ambiguous",
-    "If “best products” could mean revenue, units or rating, the agent asks before writing anything.",
-  ],
-  ["Write three candidates", "Three differently-instructed attempts at the SQL, written in parallel."],
-  [
-    "Check every query",
-    "A parser-based guard allows a single read-only SELECT over known tables and caps the row count. Unsafe SQL never runs.",
-  ],
-  [
-    "Run, and repair failures",
-    "Queries run read-only with a timeout. Errors and empty results go back to the model with the exact database message, up to twice.",
-  ],
-  [
-    "Pick the agreed answer",
-    "The result most candidates agree on wins. A chart is chosen from the result's shape and a short explanation lists any caveats.",
-  ],
-] as const
-
-const SAFETY = [
-  [
-    "Read-only by construction",
-    "The agent connects as a role that can only SELECT. Writes fail at the database even if every other check failed.",
-  ],
-  [
-    "Row-level security that can't be talked around",
-    "A regional manager only ever sees São Paulo customers. The scope is signed, so SQL can't widen it.",
-  ],
-  ["Budgets and rate limits", "Per-user limits and a daily spend cap keep a public demo affordable."],
-] as const
+import { ArchitectureDiagram } from "@/components/marketing/ArchitectureDiagram"
+import { MarketingFooter, MarketingNav } from "@/components/marketing/chrome"
+import { WalkthroughLoader } from "@/components/walkthrough/WalkthroughLoader"
+import { AboutMeButton, ButtonLink } from "@/components/marketing/links"
+import { Badge, CtaBand, FeatureGrid, Faq, Hero, Section, StackMarquee } from "@/design-system"
 
 const STACK = [
-  ["Agent", "LangGraph, Claude Sonnet 5.5 for SQL, Claude Haiku 5.5 for clarifying and summaries"],
-  ["Backend", "FastAPI, PostgreSQL 16 with pgvector and pg_trgm, sqlglot, Redis"],
-  ["Frontend", "Next.js 16, React 19, Tailwind CSS 4, TanStack Query, Table and Virtual, Recharts"],
-  ["Operations", "Docker Compose, Caddy, OpenTelemetry and Jaeger, Prometheus, GitHub Actions"],
-] as const
+  "Next.js 16",
+  "React 19",
+  "TypeScript",
+  "FastAPI",
+  "LangGraph",
+  "PostgreSQL 16",
+  "pgvector",
+  "sqlglot",
+  "Redis 8",
+  "arq",
+  "OpenTelemetry",
+  "Caddy",
+  "Docker Compose",
+  "MCP",
+]
 
-export default async function Home() {
-  const evals = await loadEvalSummary()
-  const best = evals?.bird?.runs.filter((r) => r.evidence).sort((a, b) => b.ex - a.ex)[0]
-  const baseline = evals?.bird?.runs.find((r) => r.evidence && r.ablation.startsWith("a"))
+const STEPS = [
+  {
+    icon: <FileSearch />,
+    title: "Find the right tables",
+    body: "Hybrid search over table and column descriptions, sample values and verified examples picks the context for the question.",
+  },
+  {
+    icon: <MessageCircleQuestion />,
+    title: "Ask when it is unclear",
+    body: "If a question can mean several things, the agent asks one short question instead of guessing.",
+  },
+  {
+    icon: <ShieldCheck />,
+    title: "Write and check the SQL",
+    body: "Three candidate queries are written in parallel, and a parser-based guard allows only one read-only SELECT.",
+  },
+  {
+    icon: <LineChart />,
+    title: "Run it and explain",
+    body: "Queries run read-only with a timeout and row cap. The answer comes back as a table, a chart and a short summary.",
+  },
+]
+
+const FEATURES = [
+  {
+    icon: <Braces />,
+    title: "Every answer shows its SQL",
+    body: "The exact query that produced the numbers is one click away, with every candidate and repair in the inspector.",
+    tag: "transparent",
+  },
+  {
+    icon: <ShieldCheck />,
+    title: "Three layers of safety",
+    body: "A SQL guard, a read-only database role and row-level security. A destructive query never reaches the database.",
+    tag: "safety",
+  },
+  {
+    icon: <Database />,
+    title: "Row-level security per person",
+    body: "A regional manager sees only their state. Postgres enforces it from a signed session value, whatever the SQL says.",
+    tag: "access",
+  },
+  {
+    icon: <Wrench />,
+    title: "Repairs its own mistakes",
+    body: "When a query fails, the exact database error goes back to the model for a bounded number of repair rounds.",
+    tag: "reliability",
+  },
+  {
+    icon: <BadgeCheck />,
+    title: "Learns from approved answers",
+    body: "A thumbs-up and a proposal send a query to an admin. Approved queries become examples for similar questions.",
+    tag: "feedback",
+  },
+  {
+    icon: <Table2 />,
+    title: "A catalog people can edit",
+    body: "Table and column descriptions, sample values and metric definitions in YAML, edited by admins and used in every prompt.",
+    tag: "catalog",
+  },
+]
+
+const DECISIONS = [
+  {
+    icon: <GitBranch />,
+    title: "Three candidates, then a vote",
+    body: "Candidates that return the same result agree; ties go to fewer repairs, then shorter SQL. One bad generation does not decide the answer.",
+  },
+  {
+    icon: <ShieldCheck />,
+    title: "The guard re-renders SQL",
+    body: "Queries are parsed with sqlglot and re-rendered from the checked syntax tree, so what runs is exactly what was checked.",
+  },
+  {
+    icon: <ListChecks />,
+    title: "Streams survive a dropped connection",
+    body: "The run continues on the server; the browser reconnects by polling the run, so a flaky network does not lose an answer.",
+  },
+  {
+    icon: <Database />,
+    title: "Definitions live in one place",
+    body: "Revenue, late delivery and the other metrics are defined once in a semantic layer, so every query uses the same meaning.",
+  },
+]
+
+const FAQ = [
+  {
+    q: "Is this real?",
+    a: "The product is real: a FastAPI and LangGraph backend, Postgres with row-level security and a Next.js frontend, with tests and a Docker setup. This public page is a static demo. It plays scripted answers in your browser; the result numbers come from running the same queries on the public Olist dataset. Timings, tokens and cost shown in the demo are simulated.",
+  },
+  {
+    q: "Can I use it?",
+    a: "You can explore the demo workspace: ask any of the suggested questions, open the inspector, switch persona to see row-level security, and try feedback and approvals. Sign-ups are closed and nothing you do is saved.",
+  },
+  {
+    q: "What does it cost to run?",
+    a: "This demo costs nothing to run: it is static files with no backend, no database and no model calls. The full system runs on one server with Docker Compose and pays per model call, with a daily budget cap built in.",
+  },
+  {
+    q: "Has it been benchmarked?",
+    a: "Not yet. The evaluation harness (BIRD Mini-Dev, a golden question set and a safety red team) is built, but results with a real model have not been published. The Method page explains how it is measured.",
+  },
+  {
+    q: "Where is the code?",
+    a: "The code is in a private repository for now. Ask through the About me page if you would like to see it.",
+  },
+  {
+    q: "Who built it?",
+    a: "Tiju Lukose, as a portfolio project. The About me page has more about my work.",
+  },
+]
+
+export default function LandingPage() {
   return (
     <>
-      <SiteHeader />
+      <MarketingNav />
       <main id="main">
-        <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 pt-8 pb-16 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:pt-16 lg:pb-24">
-          <div className="min-w-0">
-            <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-              Plain-English questions. SQL you can check.
-            </h1>
-            <p className="text-muted-foreground mt-5 max-w-prose text-lg">{TAGLINE}</p>
-            <p className="text-muted-foreground mt-3 max-w-prose">
-              An analytics agent over 99,441 real marketplace orders, with every step it takes on show: the tables it
-              chose, the queries it tried, and what each step cost.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/login" className="bg-primary text-primary-foreground rounded-lg px-5 py-3 font-medium">
-                Try the live demo
-              </Link>
-              <a href="#how" className="hover:bg-accent rounded-lg px-4 py-3 font-medium">
-                How it works
-              </a>
-            </div>
-            <p className="text-muted-foreground mt-4 text-sm">
-              No sign-up. Pick a persona: admin, analyst, or a regional manager who only sees São Paulo.
-            </p>
+        <Hero
+          eyebrow={
+            <Badge tone="accent" dot>
+              Interactive demo, simulated data
+            </Badge>
+          }
+          title="Ask your database in plain English. Get safe, checked SQL."
+          lede="SQL Analyst turns business questions into read-only SQL over Postgres, shows the query it ran, and explains the result. Watch it work end to end, then try it yourself."
+          actions={
+            <>
+              <ButtonLink href="#demo" size="lg">
+                Watch the walkthrough
+              </ButtonLink>
+              <ButtonLink href="/app/" variant="outline" size="lg">
+                Explore the app
+              </ButtonLink>
+            </>
+          }
+        >
+          <div id="demo" className="scroll-mt-20">
+            <WalkthroughLoader />
           </div>
-          <HeroAnswer />
-        </section>
+        </Hero>
 
-        <section id="how" className="border-t">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-            <h2 className="text-2xl font-semibold tracking-tight">How an answer is made</h2>
-            <ol className="mt-8 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-              {STEPS.map(([title, body], i) => (
-                <li key={title} className="relative pl-10">
-                  <span
-                    aria-hidden
-                    className="border-primary text-primary absolute top-0 left-0 grid size-7 place-items-center rounded-full border text-sm font-medium"
-                  >
-                    {i + 1}
-                  </span>
-                  <h3 className="font-medium">{title}</h3>
-                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{body}</p>
-                </li>
-              ))}
-            </ol>
+        <StackMarquee items={STACK} label="Designed around" />
+
+        <Section
+          id="how"
+          label="How it works"
+          title="From a question to an answer you can check"
+          lede="Each answer passes through the same eight steps. The trail of steps is shown under every answer."
+        >
+          <FeatureGrid items={STEPS} columns={4} />
+        </Section>
+
+        <Section id="features" label="What it does" title="Built for people who need to trust the numbers">
+          <FeatureGrid items={FEATURES} columns={3} />
+        </Section>
+
+        <Section
+          id="architecture"
+          label="Under the hood"
+          title="How the full system is designed"
+          lede="The full product runs as a set of services behind one origin. The public demo on this site runs on simulated data in your browser."
+        >
+          <ArchitectureDiagram />
+          <div className="mt-8">
+            <FeatureGrid items={DECISIONS} columns={4} />
           </div>
-        </section>
+        </Section>
 
-        {best && (
-          <section className="border-t">
-            <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-              <h2 className="text-2xl font-semibold tracking-tight">Measured, not claimed</h2>
-              <p className="text-muted-foreground mt-2 max-w-prose">
-                Execution accuracy on {evals?.bird?.dataset}, scored with the official BIRD evaluation code.
-              </p>
-              <dl className="mt-8 grid gap-6 sm:grid-cols-3">
-                <div>
-                  <dt className="text-muted-foreground text-sm">Full system</dt>
-                  <dd className="mt-1 text-4xl font-semibold tracking-tight">{formatValue(best.ex, "percent")}</dd>
-                </div>
-                {baseline && (
-                  <div>
-                    <dt className="text-muted-foreground text-sm">Zero-shot baseline, same model</dt>
-                    <dd className="mt-1 text-4xl font-semibold tracking-tight">
-                      {formatValue(baseline.ex, "percent")}
-                    </dd>
-                  </div>
-                )}
-                <div>
-                  <dt className="text-muted-foreground text-sm">Cost per question</dt>
-                  <dd className="mt-1 text-4xl font-semibold tracking-tight">
-                    ${best.cost_per_question_usd.toFixed(3)}
-                  </dd>
-                </div>
-              </dl>
-              <Link
-                href="/evals"
-                className="text-primary mt-6 inline-block font-medium underline-offset-4 hover:underline"
-              >
-                Method, ablations and limitations
-              </Link>
-            </div>
-          </section>
-        )}
+        <Section id="faq" label="FAQ" title="Questions people ask">
+          <Faq items={FAQ} />
+        </Section>
 
-        <section className="border-t">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-            <h2 className="text-2xl font-semibold tracking-tight">Safe to leave on the public internet</h2>
-            <ul className="mt-8 grid gap-8 sm:grid-cols-3">
-              {SAFETY.map(([title, body]) => (
-                <li key={title}>
-                  <h3 className="font-medium">{title}</h3>
-                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{body}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        <section className="border-t">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-            <h2 className="text-2xl font-semibold tracking-tight">Built with</h2>
-            <dl className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-[10rem_1fr]">
-              {STACK.map(([k, v]) => (
-                <div key={k} className="contents">
-                  <dt className="font-medium">{k}</dt>
-                  <dd className="text-muted-foreground">{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-8 text-sm">
-              Read the{" "}
-              <a className="text-primary underline underline-offset-4" href={`${REPO_URL}/blob/main/ARCHITECTURE.md`}>
-                architecture notes
-              </a>{" "}
-              or the{" "}
-              <a className="text-primary underline underline-offset-4" href={REPO_URL}>
-                source on GitHub
-              </a>
-              .
-            </p>
-          </div>
-        </section>
+        <CtaBand
+          title="Built by Tiju Lukose"
+          body="SQL Analyst is a portfolio project. More about my work, and how to reach me, is on my site."
+          actions={
+            <>
+              <AboutMeButton />
+              <ButtonLink href="/app/" variant="outline" size="lg">
+                Explore the app
+              </ButtonLink>
+            </>
+          }
+        />
       </main>
-      <SiteFooter />
+      <MarketingFooter />
     </>
   )
 }

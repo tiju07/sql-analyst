@@ -1,0 +1,19 @@
+# Cloudflare Pages response headers for the static demo (see README, "Static demo").
+#
+# CSP note: script-src and style-src allow 'unsafe-inline' because a Next.js static export inlines
+# its page data as <script> tags and the theme is applied by a small inline script before first
+# paint; there is no server to add per-request nonces. The site renders no user-supplied or
+# model-generated HTML, makes no network requests beyond its own files (connect-src 'self'), and
+# loads nothing from other origins.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable

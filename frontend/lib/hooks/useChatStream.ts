@@ -5,9 +5,11 @@ import { useCallback, useRef, useState } from "react"
 
 import { activeStage, fromRun, newAnswer, reduce, type Answer, type StreamEvent } from "@/lib/answer"
 import { announce } from "@/lib/announce"
-import { api, loginUrl, noticeFromError, unwrap, type ErrorBody } from "@/lib/api/client"
+import { mode } from "app-mode"
+
+import type { Schemas } from "@/lib/api/errors"
+import { ApiError, noticeFromError } from "@/lib/api/errors"
 import { keys } from "@/lib/api/queries"
-import { readSse } from "@/lib/sse"
 
 const POLL_MS = 2000
 
@@ -46,15 +48,14 @@ export function useChatStream({ conversationId, onConversation }: Options) {
       announce("Connection lost. Reconnecting…")
       for (;;) {
         await new Promise((r) => setTimeout(r, POLL_MS))
-        const res = await api.GET("/api/runs/{run_id}", { params: { path: { run_id: runId } } })
-        if (!res.data) continue // still offline or transient error: keep trying
-        const run = res.data
+        const run = await mode.data.run(runId).catch(() => null)
+        if (!run) continue // still offline or transient error: keep trying
         if (run.status === "running") continue
         const rows =
           run.status === "ok" || run.status === "repaired"
-            ? await api.GET("/api/runs/{run_id}/rows", { params: { path: { run_id: runId } } }).then((r) => r.data)
+            ? await mode.data.rows(runId).catch(() => undefined)
             : undefined
-        const recovered = fromRun(run, rows ?? undefined)
+        const recovered = fromRun(run, rows)
         update(key, () => ({ ...recovered, key }))
         announce(recovered.phase === "done" ? "Answer ready." : "Run finished.")
         return
@@ -64,39 +65,13 @@ export function useChatStream({ conversationId, onConversation }: Options) {
   )
 
   const run = useCallback(
-    async (key: string, path: string, body: object) => {
+    async (key: string, open: (signal: AbortSignal) => AsyncIterable<StreamEvent>) => {
       const controller = new AbortController()
       abortRef.current = controller
       setStreaming(true)
       try {
-        const res = await fetch(path, {
-          method: "POST",
-          headers: { "content-type": "application/json", accept: "text/event-stream" },
-          body: JSON.stringify(body),
-          credentials: "same-origin",
-          signal: controller.signal,
-        })
-        if (res.status === 401) {
-          window.location.assign(loginUrl())
-          return
-        }
-        if (!res.ok || !res.body) {
-          const err = (await res.json().catch(() => null)) as ErrorBody | null
-          if (err) noticeFromError(err)
-          update(key, (a) => ({
-            ...a,
-            phase: "error",
-            error: {
-              code: err?.code ?? "INTERNAL",
-              message: err?.message ?? "The request failed.",
-              retryable: true,
-            },
-          }))
-          return
-        }
         let lastStage = ""
-        for await (const msg of readSse(res.body)) {
-          const ev = { event: msg.event, data: JSON.parse(msg.data) } as StreamEvent
+        for await (const ev of open(controller.signal)) {
           update(key, (a) => reduce(a, ev))
           if (ev.event === "run") {
             if (!conversationId) onConversation?.(ev.data.conversation_id)
@@ -128,7 +103,11 @@ export function useChatStream({ conversationId, onConversation }: Options) {
           update(key, (a) => ({
             ...a,
             phase: "error",
-            error: { code: "INTERNAL", message: String(e), retryable: true },
+            error: {
+              code: (e instanceof ApiError ? e.code : "INTERNAL") as Schemas["ErrorEvent"]["code"],
+              message: e instanceof Error ? e.message : String(e),
+              retryable: true,
+            },
           }))
       } finally {
         if (abortRef.current === controller) abortRef.current = null
@@ -145,7 +124,7 @@ export function useChatStream({ conversationId, onConversation }: Options) {
       currentRef.current = a
       setAnswers((list) => [...list, a])
       announce("Question sent.")
-      return run(key, "/api/chat", { question, conversation_id: conversationId ?? null })
+      return run(key, (signal) => mode.data.chat({ question, conversation_id: conversationId ?? null }, signal))
     },
     [conversationId, run],
   )
@@ -165,7 +144,8 @@ export function useChatStream({ conversationId, onConversation }: Options) {
           ? list.map((a) => (a.key === answer.key ? resumed : a))
           : [...list, resumed],
       )
-      return run(answer.key, `/api/runs/${answer.runId}/clarify`, { answer: reply })
+      const runId = answer.runId
+      return run(answer.key, (signal) => mode.data.clarify(runId, { answer: reply }, signal))
     },
     [run],
   )
@@ -175,10 +155,7 @@ export function useChatStream({ conversationId, onConversation }: Options) {
     abortRef.current?.abort()
     if (current) update(current.key, (a) => ({ ...a, phase: "cancelled", status: "cancelled" }))
     if (current?.runId) {
-      await api
-        .POST("/api/runs/{run_id}/cancel", { params: { path: { run_id: current.runId } } })
-        .then(unwrap)
-        .catch(() => undefined)
+      await mode.data.cancelRun(current.runId).catch(() => undefined)
       refreshLists(current.conversationId)
     }
     announce("Stopped.")

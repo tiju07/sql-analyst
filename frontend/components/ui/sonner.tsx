@@ -1,39 +1,34 @@
 "use client"
 
-import { useTheme } from "next-themes"
+import { CircleCheck, Info, LoaderCircle, OctagonX, TriangleAlert } from "lucide-react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+import { useTheme } from "@/design-system"
 
+/** Toasts in Foundry surfaces: hairline border, pop shadow, small radius. */
+export function Toaster(props: ToasterProps) {
+  const [theme] = useTheme()
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: <CircleCheck className="text-success size-4" />,
+        info: <Info className="text-info size-4" />,
+        warning: <TriangleAlert className="text-warning size-4" />,
+        error: <OctagonX className="text-danger size-4" />,
+        loading: <LoaderCircle className="size-4 animate-spin" />,
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--normal-bg": "var(--surface)",
+          "--normal-text": "var(--fg)",
+          "--normal-border": "var(--line-strong)",
+          "--border-radius": "var(--radius-lg)",
         } as React.CSSProperties
       }
-      toastOptions={{
-        classNames: {
-          toast: "cn-toast",
-        },
-      }}
+      toastOptions={{ classNames: { toast: "shadow-pop text-[13px]", description: "!text-fg-muted" } }}
       {...props}
     />
   )
 }
-
-export { Toaster }

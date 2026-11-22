@@ -8,7 +8,7 @@ describe("formatValue", () => {
     [0.0811, "percent", "8.1%"],
     [96478, "count", "96,478"],
     [4.0867, "number", "4.09"],
-    [null, "count", "—"],
+    [null, "count", "None"],
     [true, null, "Yes"],
     ["SP", null, "SP"],
   ] as const)("%s as %s -> %s", (value, fmt, expected) => {

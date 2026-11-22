@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { BookOpen, ChartColumn, Database, MessageSquare, Moon, Plus, ShieldCheck } from "lucide-react"
-import { useTheme } from "next-themes"
+import { setTheme, useResolvedTheme } from "@/lib/theme"
 import { useRouter } from "next/navigation"
 
 import {
@@ -15,15 +15,16 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command"
-import { api, unwrap } from "@/lib/api/client"
+import { mode } from "app-mode"
+
 import { keys } from "@/lib/api/queries"
 
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const router = useRouter()
-  const { resolvedTheme, setTheme } = useTheme()
+  const resolvedTheme = useResolvedTheme()
   const conversations = useQuery({
     queryKey: keys.conversations(""),
-    queryFn: async () => unwrap(await api.GET("/api/conversations", { params: { query: {} } })),
+    queryFn: () => mode.data.conversations(),
     enabled: open,
   })
   function go(href: string) {
@@ -66,9 +67,9 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               <ShieldCheck aria-hidden />
               Verified queries
             </CommandItem>
-            <CommandItem onSelect={() => go("/evals")}>
+            <CommandItem onSelect={() => go("/evals/")}>
               <ChartColumn aria-hidden />
-              Evaluation results
+              Method
             </CommandItem>
             <CommandItem onSelect={() => go("/")}>
               <BookOpen aria-hidden />

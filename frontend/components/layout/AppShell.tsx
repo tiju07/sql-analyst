@@ -1,135 +1,155 @@
 "use client"
 
-import { ChartColumn, Command, Database, Menu, PanelLeftClose, PanelLeftOpen, Plus, ShieldCheck } from "lucide-react"
+import { mode } from "app-mode"
+import {
+  ArrowUpRight,
+  Command,
+  Database,
+  Menu,
+  MessageSquareText,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  ShieldCheck,
+} from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Suspense, useCallback, useState, type ReactNode } from "react"
 
 import { CommandPalette } from "@/components/layout/CommandPalette"
 import { ConversationList } from "@/components/layout/ConversationList"
+import { DemoBar } from "@/components/layout/DemoBar"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
-import { UserMenu } from "@/components/layout/UserMenu"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { useMe } from "@/lib/api/queries"
+import { ABOUT_ME_URL, IconButton, Kbd, Logo } from "@/design-system"
 import { usePersistentFlag } from "@/lib/hooks/useClientFlags"
 import { useHotkeys } from "@/lib/hooks/useHotkeys"
-import { ROLE_LABEL, scopeLabel } from "@/lib/personas"
 import { PRODUCT_NAME } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
 const NAV = [
+  { href: "/app", label: "Ask", icon: MessageSquareText },
   { href: "/app/catalog", label: "Data catalog", icon: Database },
   { href: "/app/verified", label: "Verified queries", icon: ShieldCheck },
 ] as const
 
+function useSection() {
+  const path = (usePathname() ?? "/app").replace(/\/$/, "")
+  return NAV.find((n) => n.href === path) ?? NAV[0]
+}
+
 function Brand() {
   return (
-    <Link href="/app" className="flex items-center gap-2 rounded-md px-1 font-semibold tracking-tight">
-      <span
-        aria-hidden
-        className="bg-primary text-primary-foreground grid size-6 place-items-center rounded-md font-mono text-xs"
-      >
-        Σ
-      </span>
-      {PRODUCT_NAME}
+    <Link href="/app" className="rounded-sm" aria-label={`${PRODUCT_NAME}, new question`}>
+      <Logo name={PRODUCT_NAME} />
     </Link>
   )
 }
 
-function PersonaBadge() {
-  const me = useMe()
-  if (!me.data) return null
+function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const active = useSection()
   return (
-    <div className="px-3 text-xs">
-      <Badge variant="secondary">{ROLE_LABEL[me.data.role]}</Badge>
-      <p className="text-muted-foreground mt-1">Sees: {scopeLabel(me.data.allowed_states)}</p>
-    </div>
+    <nav aria-label="Workspace" className="grid gap-0.5">
+      {NAV.map(({ href, label, icon: Icon }) => (
+        <Link
+          key={href}
+          href={href}
+          onClick={onNavigate}
+          aria-current={active.href === href ? "page" : undefined}
+          className={cn(
+            "flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-100",
+            active.href === href ? "bg-surface-3 text-fg" : "text-fg-muted hover:bg-surface-2 hover:text-fg",
+          )}
+        >
+          <Icon aria-hidden className="size-4 opacity-80" />
+          {label}
+        </Link>
+      ))}
+    </nav>
   )
 }
 
 function SidebarBody({ onNavigate, onCollapse }: { onNavigate?: () => void; onCollapse?: () => void }) {
-  const pathname = usePathname()
   return (
-    <div className="flex h-full flex-col gap-3 py-3">
-      <div className="flex items-center justify-between gap-2 px-3">
+    <div className="flex h-full min-h-0 flex-col gap-4 px-3 py-4">
+      <div className="flex items-center justify-between gap-2 px-1">
         <Brand />
-        {onCollapse && (
-          <Button variant="ghost" size="icon-sm" aria-label="Collapse sidebar" onClick={onCollapse}>
-            <PanelLeftClose aria-hidden />
-          </Button>
-        )}
+        {onCollapse ? (
+          <IconButton label="Collapse sidebar" onClick={onCollapse} className="border-transparent">
+            <PanelLeftClose className="size-4" aria-hidden />
+          </IconButton>
+        ) : null}
       </div>
-      <div className="px-3">
-        <Button asChild className="w-full justify-start" onClick={onNavigate}>
-          <Link href="/app">
-            <Plus aria-hidden />
-            New chat
-          </Link>
-        </Button>
+      <Link
+        href="/app"
+        onClick={onNavigate}
+        className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex h-8 items-center gap-2 rounded-md border border-transparent px-3 text-[13px] font-medium shadow-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        <Plus aria-hidden className="size-4" />
+        New question
+      </Link>
+      <NavLinks onNavigate={onNavigate} />
+      <div className="border-line flex min-h-0 flex-1 flex-col border-t pt-3">
+        <Suspense>
+          <ConversationList onNavigate={onNavigate} />
+        </Suspense>
       </div>
-      <Suspense>
-        <ConversationList onNavigate={onNavigate} />
-      </Suspense>
-      <nav aria-label="Workspace" className="space-y-0.5 border-t px-2 pt-3">
-        {NAV.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            onClick={onNavigate}
-            aria-current={pathname === href ? "page" : undefined}
-            className={cn(
-              "hover:bg-sidebar-accent flex items-center gap-2 rounded-md px-2 py-1.5 text-sm",
-              pathname === href && "bg-sidebar-accent font-medium",
-            )}
-          >
-            <Icon aria-hidden className="size-4" />
-            {label}
-          </Link>
-        ))}
-        <a href="/evals" className="hover:bg-sidebar-accent flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
-          <ChartColumn aria-hidden className="size-4" />
-          Evaluation results
-        </a>
-      </nav>
-      <PersonaBadge />
-      <div className="flex items-center gap-1 px-2">
-        <div className="min-w-0 flex-1">
-          <UserMenu />
+      <div className="border-line grid gap-3 border-t pt-3">
+        <mode.AccountMenu onDone={onNavigate} />
+        <div className="flex items-center justify-between gap-2 px-1 text-[13px]">
+          <span className="flex gap-3">
+            <a href="/evals/" className="text-fg-muted hover:text-fg">
+              Method
+            </a>
+            <a
+              href={ABOUT_ME_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-fg-muted hover:text-fg inline-flex items-center gap-0.5"
+            >
+              About me
+              <ArrowUpRight aria-hidden className="size-3.5" />
+            </a>
+          </span>
+          <ThemeToggle />
         </div>
-        <ThemeToggle compact />
       </div>
     </div>
   )
 }
 
 function Rail({ onExpand, onPalette }: { onExpand: () => void; onPalette: () => void }) {
-  const items = [{ label: "New chat", href: "/app", icon: Plus }, ...NAV]
+  const active = useSection()
   return (
-    <div className="flex h-full flex-col items-center gap-1 py-3">
-      <Button variant="ghost" size="icon" aria-label="Open sidebar" onClick={onExpand}>
-        <PanelLeftOpen aria-hidden />
-      </Button>
-      <Button variant="ghost" size="icon" aria-label="Command palette" onClick={onPalette}>
-        <Command aria-hidden />
-      </Button>
-      {items.map(({ label, href, icon: Icon }) => (
+    <div className="flex h-full flex-col items-center gap-1 py-4">
+      <IconButton label="Open sidebar" onClick={onExpand} className="border-transparent">
+        <PanelLeftOpen className="size-4" aria-hidden />
+      </IconButton>
+      <IconButton label="Command palette" onClick={onPalette} className="border-transparent">
+        <Command className="size-4" aria-hidden />
+      </IconButton>
+      <div className="bg-line my-2 h-px w-6" />
+      {NAV.map(({ href, label, icon: Icon }) => (
         <Tooltip key={href}>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" asChild>
-              <Link href={href} aria-label={label}>
-                <Icon aria-hidden />
-              </Link>
-            </Button>
+            <Link
+              href={href}
+              aria-label={label}
+              aria-current={active.href === href ? "page" : undefined}
+              className={cn(
+                "grid size-8 place-items-center rounded-md transition-colors",
+                active.href === href ? "bg-surface-3 text-fg" : "text-fg-muted hover:bg-surface-2 hover:text-fg",
+              )}
+            >
+              <Icon aria-hidden className="size-4" />
+            </Link>
           </TooltipTrigger>
           <TooltipContent side="right">{label}</TooltipContent>
         </Tooltip>
       ))}
-      <div className="mt-auto flex flex-col items-center gap-1">
-        <ThemeToggle compact />
-        <UserMenu compact />
+      <div className="mt-auto">
+        <ThemeToggle />
       </div>
     </div>
   )
@@ -138,58 +158,66 @@ function Rail({ onExpand, onPalette }: { onExpand: () => void; onPalette: () => 
 export function AppShell({ children }: { children: ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [collapsed, setCollapsedPersist] = usePersistentFlag("sidebar-collapsed")
+  const [collapsed, setCollapsed] = usePersistentFlag("sidebar-collapsed")
   const openPalette = useCallback(() => setPaletteOpen(true), [])
+  const section = useSection()
   useHotkeys(openPalette)
 
   return (
-    <div className="flex h-dvh overflow-hidden">
-      {/* desktop sidebar or rail */}
-      <aside
-        aria-label="Sidebar"
-        className={cn("bg-sidebar hidden shrink-0 border-r sm:block", collapsed ? "w-14" : "w-14 lg:w-64")}
-      >
-        <div className={cn("h-full", collapsed ? "block" : "lg:hidden")}>
-          <Rail
-            onExpand={() =>
-              window.matchMedia("(min-width: 1024px)").matches ? setCollapsedPersist(false) : setDrawerOpen(true)
-            }
-            onPalette={openPalette}
-          />
-        </div>
-        {!collapsed && (
-          <div className="hidden h-full lg:block">
-            <SidebarBody onCollapse={() => setCollapsedPersist(true)} />
-          </div>
-        )}
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* phone top bar */}
-        <header
-          className="flex items-center gap-2 border-b px-2 py-1.5 sm:hidden"
-          style={{ paddingTop: "max(0.375rem, env(safe-area-inset-top))" }}
+    <div className="bg-bg flex h-dvh flex-col overflow-hidden">
+      {mode.isDemo ? <DemoBar /> : null}
+      <div className="flex min-h-0 flex-1">
+        <aside
+          aria-label="Sidebar"
+          className={cn("border-line bg-bg-subtle hidden shrink-0 border-r lg:block", collapsed ? "w-14" : "w-[232px]")}
         >
-          <Button variant="ghost" size="icon" aria-label="Open menu" onClick={() => setDrawerOpen(true)}>
-            <Menu aria-hidden />
-          </Button>
-          <Brand />
-          <Button variant="ghost" size="icon" className="ml-auto" aria-label="New chat" asChild>
-            <Link href="/app">
-              <Plus aria-hidden />
-            </Link>
-          </Button>
-        </header>
-        <main id="main" className="min-h-0 flex-1">
-          {children}
-        </main>
+          {collapsed ? (
+            <Rail onExpand={() => setCollapsed(false)} onPalette={openPalette} />
+          ) : (
+            <SidebarBody onCollapse={() => setCollapsed(true)} />
+          )}
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="border-line flex h-12 shrink-0 items-center gap-2 border-b px-3 sm:px-5">
+            <span className="lg:hidden">
+              <IconButton label="Open menu" onClick={() => setDrawerOpen(true)} className="border-transparent">
+                <Menu className="size-4" aria-hidden />
+              </IconButton>
+            </span>
+            <span className="lg:hidden">
+              <Brand />
+            </span>
+            <span className="text-fg hidden text-[13px] font-medium lg:inline">{section.label}</span>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={openPalette}
+                className="border-line text-fg-muted hover:border-line-strong hover:text-fg hidden h-8 items-center gap-2 rounded-md border px-2.5 text-[13px] transition-colors sm:inline-flex"
+              >
+                Search and jump
+                <Kbd>⌘K</Kbd>
+              </button>
+              <Link
+                href="/app"
+                aria-label="New question"
+                className="border-line text-fg-2 hover:border-line-strong hover:text-fg grid size-8 place-items-center rounded-md border lg:hidden"
+              >
+                <Plus aria-hidden className="size-4" />
+              </Link>
+            </div>
+          </header>
+          <main id="main" className="min-h-0 flex-1">
+            {children}
+          </main>
+        </div>
       </div>
 
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent side="left" className="bg-sidebar w-[85vw] max-w-80 p-0">
+        <SheetContent side="left" className="bg-bg-subtle w-[85vw] max-w-80 p-0">
           <SheetHeader className="sr-only">
             <SheetTitle>Menu</SheetTitle>
-            <SheetDescription>Conversations and workspace pages</SheetDescription>
+            <SheetDescription>Workspace pages and conversations</SheetDescription>
           </SheetHeader>
           <SidebarBody onNavigate={() => setDrawerOpen(false)} />
         </SheetContent>

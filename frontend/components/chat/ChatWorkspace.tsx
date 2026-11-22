@@ -12,7 +12,8 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fromRun, type Answer } from "@/lib/answer"
-import { api, unwrap } from "@/lib/api/client"
+import { mode } from "app-mode"
+
 import { keys } from "@/lib/api/queries"
 import { useChatStream } from "@/lib/hooks/useChatStream"
 import { FOCUS_COMPOSER } from "@/lib/hooks/useHotkeys"
@@ -21,7 +22,7 @@ import { useMediaQuery } from "@/lib/hooks/useMediaQuery"
 function Question({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <p className="bg-secondary max-w-[85%] rounded-2xl rounded-br-md px-4 py-2 break-words whitespace-pre-wrap">
+      <p className="border-line bg-surface-2 text-fg max-w-[85%] rounded-lg border px-3.5 py-2 text-[15px] break-words whitespace-pre-wrap">
         {text}
       </p>
     </div>
@@ -42,7 +43,7 @@ export function ChatWorkspace() {
   const onConversation = useCallback((id: string) => {
     setConversationId(id)
     // Update the address without remounting: the stream that created it keeps running.
-    window.history.replaceState(null, "", `/app?c=${id}`)
+    window.history.replaceState(null, "", `?c=${id}`)
   }, [])
   const chat = useChatStream({ conversationId, onConversation })
 
@@ -60,10 +61,7 @@ export function ChatWorkspace() {
 
   const history = useQuery({
     queryKey: keys.conversation(conversationId ?? ""),
-    queryFn: async () =>
-      unwrap(
-        await api.GET("/api/conversations/{conv_id}", { params: { path: { conv_id: conversationId as string } } }),
-      ),
+    queryFn: () => mode.data.conversation(conversationId as string),
     enabled: Boolean(conversationId),
   })
 
@@ -138,10 +136,10 @@ export function ChatWorkspace() {
         <ResizablePanel minSize={420}>{conversation}</ResizablePanel>
         <ResizableHandle withHandle aria-label="Resize inspector" />
         <ResizablePanel defaultSize={420} minSize={320} maxSize={720}>
-          <aside aria-label="Inspector" className="bg-card h-full overflow-y-auto border-l">
+          <aside aria-label="Inspector" className="bg-surface h-full overflow-y-auto border-l">
             <div className="flex justify-end px-2 pt-2">
               <button
-                className="text-muted-foreground hover:text-foreground rounded-md px-2 py-1 text-sm"
+                className="text-fg-muted hover:text-fg rounded-md px-2 py-1 text-sm"
                 onClick={() => setInspecting(null)}
               >
                 Close

@@ -1,6 +1,6 @@
 "use client"
 
-import { useTheme } from "next-themes"
+import { useResolvedTheme } from "@/lib/theme"
 import { useMemo } from "react"
 import {
   Area,
@@ -32,7 +32,7 @@ type Palette = { series: string[]; grid: string; axis: string; surface: string; 
 /** SVG attributes can't resolve CSS variables, so read the tokens and re-read on theme change. */
 // This component is client-only (dynamic, ssr: false), so reading styles during render is safe.
 function usePalette(): Palette {
-  const { resolvedTheme } = useTheme()
+  const resolvedTheme = useResolvedTheme()
   return useMemo(() => {
     const css = getComputedStyle(document.documentElement)
     const v = (n: string) => css.getPropertyValue(n).trim()
@@ -57,13 +57,13 @@ function TooltipBox({
 }: TooltipContentProps<number, string> & { xFormat: ValueFormat | null; yFormat: ValueFormat | null }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-popover text-popover-foreground rounded-md border px-3 py-2 text-xs shadow-[var(--shadow-overlay)]">
+    <div className="bg-surface text-fg shadow-pop rounded-md border px-3 py-2 text-xs">
       {label !== undefined && <p className="mb-1 font-medium">{formatValue(label, xFormat)}</p>}
       <ul className="space-y-0.5">
         {payload.map((p) => (
           <li key={String(p.dataKey)} className="flex items-center gap-2">
             <span aria-hidden className="size-2 rounded-full" style={{ background: p.color }} />
-            <span className="text-muted-foreground">{String(p.name)}</span>
+            <span className="text-fg-muted">{String(p.name)}</span>
             <span className="tabular ml-auto pl-3 font-medium">{formatValue(p.value, yFormat)}</span>
           </li>
         ))}
@@ -200,6 +200,8 @@ export default function ChartCanvas({ spec, prepared }: { spec: ChartSpec; prepa
   // Bars: horizontal when labels are long or many (reads better on phones), columns otherwise.
   const horizontal = points.length > 6 || points.some((p) => String(p.x).length > 8)
   const height = horizontal ? Math.max(HEIGHT, points.length * 32 + 40) : HEIGHT
+  // Category labels are 12 px text: about 7 px a character, capped so the bars keep most of the width.
+  const labelWidth = Math.min(170, Math.max(56, ...points.map((p) => String(p.x).length * 7 + 12)))
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart
@@ -214,7 +216,7 @@ export default function ChartCanvas({ spec, prepared }: { spec: ChartSpec; prepa
         {horizontal ? (
           <>
             <XAxis type="number" {...axisProps} tickFormatter={yTick} />
-            <YAxis type="category" dataKey="x" {...axisProps} tickFormatter={xTick} width={110} />
+            <YAxis type="category" dataKey="x" {...axisProps} tickFormatter={xTick} width={labelWidth} />
           </>
         ) : (
           <>

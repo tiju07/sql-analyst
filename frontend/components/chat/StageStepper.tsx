@@ -3,6 +3,7 @@
 import { Check, LoaderCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 
+import { Badge } from "@/design-system"
 import { STAGES, type Answer, type StageState } from "@/lib/answer"
 import { formatMs } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -25,7 +26,15 @@ function elapsed(s: StageState, now: number): number {
  * The pipeline trail: every answer shows the path it took and what each step cost.
  * Desktop lists all eight steps; phones show the current step and a segmented bar.
  */
-export function StageStepper({ answer, live }: { answer: Answer; live: boolean }) {
+export function StageStepper({
+  answer,
+  live,
+  simulated = false,
+}: {
+  answer: Answer
+  live: boolean
+  simulated?: boolean
+}) {
   const now = useTicker(live)
   const current = STAGES.find((s) => answer.stages[s.name].status === "active")
   const done = STAGES.filter((s) => answer.stages[s.name].status === "done").length
@@ -41,15 +50,15 @@ export function StageStepper({ answer, live }: { answer: Answer; live: boolean }
               key={s.name}
               className={cn(
                 "h-1 flex-1 rounded-full",
-                answer.stages[s.name].status === "done" && "bg-primary",
-                answer.stages[s.name].status === "active" && "bg-primary/50 motion-safe:animate-pulse",
-                answer.stages[s.name].status === "pending" && "bg-muted",
+                answer.stages[s.name].status === "done" && "bg-accent",
+                answer.stages[s.name].status === "active" && "bg-accent/50 motion-safe:animate-pulse",
+                answer.stages[s.name].status === "pending" && "bg-surface-3",
               )}
             />
           ))}
         </div>
-        <span className="text-muted-foreground shrink-0 text-xs">{current ? current.active : `${done} steps`}</span>
-        <span className="tabular shrink-0 text-xs">{formatMs(total)}</span>
+        <span className="text-fg-muted shrink-0 text-xs">{current ? current.active : `${done} steps`}</span>
+        <span className="text-fg-2 tabular shrink-0 text-xs">{formatMs(total)}</span>
       </div>
 
       {/* full trail: tablet and up */}
@@ -60,25 +69,26 @@ export function StageStepper({ answer, live }: { answer: Answer; live: boolean }
           return (
             <li key={s.name} className="flex items-center gap-1">
               {i > 0 && (
-                <span aria-hidden className={cn("h-px w-3", st.status === "pending" ? "bg-border" : "bg-primary/40")} />
+                <span aria-hidden className={cn("h-px w-2.5", st.status === "pending" ? "bg-line" : "bg-accent/50")} />
               )}
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs",
-                  st.status === "done" && "bg-accent-wash text-foreground border-transparent",
-                  st.status === "active" && "border-primary text-foreground",
-                  st.status === "pending" && "text-muted-foreground border-dashed",
+                  "inline-flex h-6 items-center gap-1.5 rounded-sm border px-1.5 text-xs",
+                  st.status === "done" && "border-line bg-surface-2 text-fg",
+                  st.status === "active" && "border-accent bg-accent-soft text-fg",
+                  st.status === "pending" && "border-line-strong text-fg-muted border-dashed",
+                  skipped && "opacity-60",
                 )}
               >
-                {st.status === "done" && <Check aria-hidden className="text-primary size-3" />}
+                {st.status === "done" && <Check aria-hidden className="text-success size-3" />}
                 {st.status === "active" && (
-                  <LoaderCircle aria-hidden className="text-primary size-3 motion-safe:animate-spin" />
+                  <LoaderCircle aria-hidden className="text-accent-ink size-3 motion-safe:animate-spin" />
                 )}
                 <span>{s.label}</span>
                 {st.status !== "pending" && (
-                  <span className="text-muted-foreground tabular">
+                  <span className="text-fg-muted tabular font-mono text-[11px]">
                     {formatMs(elapsed(st, now))}
-                    {st.rounds > 1 && ` ×${st.rounds}`}
+                    {st.rounds > 1 && ` x${st.rounds}`}
                   </span>
                 )}
                 <span className="sr-only">
@@ -94,6 +104,11 @@ export function StageStepper({ answer, live }: { answer: Answer; live: boolean }
             </li>
           )
         })}
+        {simulated && !live ? (
+          <li className="ml-1">
+            <Badge mono>Simulated timings</Badge>
+          </li>
+        ) : null}
       </ol>
     </div>
   )

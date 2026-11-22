@@ -4,3 +4,9 @@ lib/api/openapi.json
 pnpm-lock.yaml
 tests/e2e/artifacts
 .lighthouseci
+tests/e2e-static/artifacts
+out
+# Vendored Foundry design system: kept byte-identical to its source.
+design-system
+# Written by scripts/olist_fixtures.py; kept exactly as generated.
+fixtures/olist-aggregates.json

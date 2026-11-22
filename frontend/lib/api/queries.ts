@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { api, unwrap } from "./client"
+import { mode } from "app-mode"
 
 export const keys = {
   me: ["me"] as const,
@@ -20,7 +20,7 @@ export const keys = {
 export function useMe() {
   return useQuery({
     queryKey: keys.me,
-    queryFn: async () => unwrap(await api.GET("/api/auth/me")),
+    queryFn: () => mode.data.me(),
     staleTime: 5 * 60_000,
   })
 }
@@ -28,7 +28,7 @@ export function useMe() {
 export function useTables() {
   return useQuery({
     queryKey: keys.tables,
-    queryFn: async () => unwrap(await api.GET("/api/catalog/tables")),
+    queryFn: () => mode.data.tables(),
     staleTime: 5 * 60_000,
   })
 }

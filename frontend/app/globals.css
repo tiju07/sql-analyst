@@ -1,110 +1,111 @@
-@import "tailwindcss";
+/* Foundry design system: Tailwind v4, tokens, theme mapping, base styles, self-hosted Geist. */
+@import "../design-system/styles/index.css";
+/* Enter and exit animations for Radix overlays (dialog, sheet, menus), and their data-open variants. */
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "../styles/tokens.css";
 
-@custom-variant dark (&:is(.dark *));
+/*
+ * Contrast fixes on top of Foundry tokens (logged in docs/DESIGN_SYSTEM_REQUESTS.md):
+ * - light success and warning text on their soft backgrounds measured 4.4:1; darkened to pass AA.
+ * - dark blue accent (#3b82f6) under white button text measured 3.7:1; the light blue passes.
+ */
+:root {
+  --success: #08704c;
+  --warning: #92500a;
+}
+:root[data-theme="dark"][data-accent="blue"] {
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-accent="blue"] {
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+  }
+}
+
+/*
+ * Hero rise-in starts at opacity 0.01 instead of 0: Chrome does not count an element that first
+ * paints fully transparent as Largest Contentful Paint, so the headline would never be the LCP.
+ * Same look. (Logged in docs/DESIGN_SYSTEM_REQUESTS.md.)
+ */
+@keyframes foundry-rise {
+  from {
+    opacity: 0.01;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Chart series. Slot 1 is the product accent; the rest are a neutral-plus-hue set checked for
+ * colour-blind separation against both canvases. Grid and axis reuse the Foundry line and text roles.
+ */
+:root {
+  --chart-1: var(--accent);
+  --chart-2: #c2410c;
+  --chart-3: #0f766e;
+  --chart-4: #a16207;
+  --chart-5: #7c3aed;
+  --chart-grid: var(--line);
+  --chart-axis: var(--fg-muted);
+}
+:root[data-theme="dark"] {
+  --chart-2: #fb923c;
+  --chart-3: #2dd4bf;
+  --chart-4: #facc15;
+  --chart-5: #a78bfa;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chart-2: #fb923c;
+    --chart-3: #2dd4bf;
+    --chart-4: #facc15;
+    --chart-5: #a78bfa;
+  }
+}
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-heading: var(--font-sans);
-  --color-ok: var(--ok);
-  --color-warn: var(--warn);
-  --color-accent-wash: var(--accent-wash);
-  --color-accent-strong: var(--accent-strong);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --color-chart-grid: var(--chart-grid);
   --color-chart-axis: var(--chart-axis);
-  --shadow-raised: var(--shadow-raised);
-  --shadow-overlay: var(--shadow-overlay);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
+  /* Hairlines by default, so a bare `border` is a Foundry line, not currentColor. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--line);
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  html {
-    @apply font-sans;
-    font-feature-settings: "ss01", "cv11";
-  }
-  /* Figures line up in tables, KPIs and anything else that compares numbers. */
-  table,
-  .tabular {
+  table {
     font-variant-numeric: tabular-nums;
   }
-  :focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
-  /* WCAG 2.5.5-style 44px targets on touch screens without bloating desktop density. */
+  /* WCAG 2.5.8: 44 px targets on touch screens without bloating desktop density. */
   @media (pointer: coarse) {
     button,
     [role="button"],
     [role="tab"],
     [role="menuitem"],
     [role="option"],
-    a[data-slot],
-    input:not([type="checkbox"], [type="radio"]),
-    select {
+    select,
+    input:not([type="checkbox"], [type="radio"]) {
       min-height: 44px;
     }
-    [data-size^="icon"] {
+    button[aria-label],
+    a[aria-label] {
       min-width: 44px;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
     }
   }
 }

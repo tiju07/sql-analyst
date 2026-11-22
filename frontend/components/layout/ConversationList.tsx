@@ -21,8 +21,11 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { api, unwrap, type Schemas } from "@/lib/api/client"
+import { mode } from "app-mode"
+
+import type { Schemas } from "@/lib/api/errors"
 import { keys } from "@/lib/api/queries"
+import { saved } from "@/lib/notify"
 import { cn } from "@/lib/utils"
 
 type Conversation = Schemas["ConversationOut"]
@@ -68,25 +71,21 @@ export function ConversationList({ onNavigate }: { onNavigate?: () => void }) {
 
   const list = useQuery({
     queryKey: keys.conversations(query),
-    queryFn: async () => unwrap(await api.GET("/api/conversations", { params: { query: query ? { q: query } : {} } })),
+    queryFn: () => mode.data.conversations(query),
   })
   const rename = useMutation({
-    mutationFn: async ({ id, title }: { id: string; title: string }) =>
-      unwrap(await api.PATCH("/api/conversations/{conv_id}", { params: { path: { conv_id: id } }, body: { title } })),
+    mutationFn: ({ id, title }: { id: string; title: string }) => mode.data.renameConversation(id, title),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["conversations"] })
-      toast.success("Conversation renamed")
+      saved("Conversation renamed")
     },
     onError: () => toast.error("Rename failed"),
   })
   const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.DELETE("/api/conversations/{conv_id}", { params: { path: { conv_id: id } } })
-      if (!res.response.ok) throw new Error("delete failed")
-    },
+    mutationFn: (id: string) => mode.data.deleteConversation(id),
     onSuccess: (_, id) => {
       void qc.invalidateQueries({ queryKey: ["conversations"] })
-      toast.success("Conversation deleted")
+      saved("Conversation deleted")
       if (id === active) router.push("/app")
     },
     onError: () => toast.error("Delete failed"),
@@ -94,10 +93,10 @@ export function ConversationList({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="relative px-3">
+      <div className="relative">
         <Search
           aria-hidden
-          className="text-muted-foreground pointer-events-none absolute top-1/2 left-5 size-4 -translate-y-1/2"
+          className="text-fg-muted pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
         />
         <label htmlFor="conv-search" className="sr-only">
           Search conversations
@@ -111,7 +110,7 @@ export function ConversationList({ onNavigate }: { onNavigate?: () => void }) {
           className="pl-8"
         />
       </div>
-      <nav aria-label="Conversations" className="mt-3 min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+      <nav aria-label="Conversations" className="-mx-1 mt-3 min-h-0 flex-1 overflow-y-auto px-1 pb-2">
         {list.isPending && (
           <div className="space-y-2 px-1">
             {[0, 1, 2, 3].map((i) => (
@@ -120,22 +119,22 @@ export function ConversationList({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         )}
         {list.isError && (
-          <p className="text-muted-foreground px-2 text-sm">
+          <p className="text-fg-muted px-2 text-sm">
             Couldn&apos;t load conversations.{" "}
-            <button className="text-primary underline" onClick={() => list.refetch()}>
+            <button className="text-accent-ink underline" onClick={() => list.refetch()}>
               Retry
             </button>
           </p>
         )}
         {list.data?.length === 0 && (
-          <p className="text-muted-foreground px-2 text-sm">
+          <p className="text-fg-muted px-2 text-sm">
             {query ? "No conversations match." : "Your conversations will appear here."}
           </p>
         )}
         {list.data &&
           group(list.data).map(([label, items]) => (
             <section key={label} className="mb-3">
-              <h3 className="text-muted-foreground px-2 py-1 text-xs font-medium">{label}</h3>
+              <h3 className="text-fg-muted px-2 py-1 text-[11px] font-medium">{label}</h3>
               <ul>
                 {items.map((c) => (
                   <li key={c.id} className="group/item relative">
@@ -168,8 +167,8 @@ export function ConversationList({ onNavigate }: { onNavigate?: () => void }) {
                           onClick={onNavigate}
                           aria-current={c.id === active ? "page" : undefined}
                           className={cn(
-                            "hover:bg-sidebar-accent block truncate rounded-md py-1.5 pr-9 pl-2 text-sm",
-                            c.id === active && "bg-sidebar-accent font-medium",
+                            "hover:bg-surface-3 block truncate rounded-md py-1.5 pr-9 pl-2 text-sm",
+                            c.id === active && "bg-surface-3 font-medium",
                           )}
                         >
                           {c.title}
