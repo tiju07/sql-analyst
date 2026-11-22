@@ -17,7 +17,7 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
       - run: uv sync --locked
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.4.0
       - uses: pnpm/action-setup@v6
         with:
           version: 12.14.0
@@ -169,7 +169,7 @@ jobs:
         if: env.KAGGLE_KEY == ''
         run: echo "::notice::KAGGLE_USERNAME/KAGGLE_KEY secrets not set; e2e skipped."
       - if: env.KAGGLE_KEY != ''
-        uses: astral-sh/setup-uv@v10
+        uses: astral-sh/setup-uv@v10.4.0
       - if: env.KAGGLE_KEY != ''
         uses: pnpm/action-setup@v6
         with:
@@ -209,7 +209,7 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
       - run: uv sync --locked
